@@ -543,7 +543,7 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.compile_expression(True, True)
 
-        self.vm.WriteArithmetic('neg')
+        self.vm.WriteArithmetic(grammar.NEG)
         self.vm.WriteIf("L_" + self.if_counter.__str__() + "_1")
 
         # )
@@ -602,7 +602,7 @@ class CompilationEngine(object):
 
         self.vm.WriteLabel("L_" + self.while_counter.__str__() + "_1")
         self.compile_expression()
-        self.vm.WriteArithmetic('neg')
+        self.vm.WriteArithmetic(grammar.NEG)
         self.vm.WriteIf("L_" + self.while_counter.__str__() + "_2")
 
         # )
@@ -690,17 +690,25 @@ class CompilationEngine(object):
 
         # Integer constant, String constant, keyword constant
         type = self.tokenizer.token_type()
+
+        # integer constant
         if (type == grammar.INT_CONST):
             if check:
                 return True
             self.vm.writePush(grammar.CONST, "")
+
+            # keyword
         elif (type == grammar.KEYWORD and self.tokenizer.keyword() in grammar.keyword_constant):
             if check:
-                return True # TODO what are we suppose to return here?
+                return True
+            self.compile_keyword()
+
+            # string constant
         elif type == grammar.STRING_CONS:
             if check:
                 return True
-                # TODO what are we suppose to return here?
+            self.compile_string_const()
+
         # ( expression )
         elif self.tokenizer.current_value == "(":
             if check:
@@ -746,6 +754,32 @@ class CompilationEngine(object):
             return False
 
         return True
+
+    def compile_string_const(self):
+        """ Compile string constant"""
+        string = self.tokenizer.current_value
+
+        self.vm.writePush(grammar.CONST, len(string))
+        self.vm.writeCall("String.new", 1)
+
+        for i in range(len(string)):
+            self.vm.writePush(grammar.CONST, ord(string[i]))
+            self.vm.writeCall("String.appendChar", 2)
+
+
+    def compile_keyword(self):
+        """
+        Compile keyword
+        """
+        # this
+        if self.tokenizer.current_value == grammar.keyword_constant[3]:
+            self.vm.writePush(grammar.POINTER, 0)
+        else:
+            # true, false, null
+            self.vm.writePush(grammar.CONST, 0)
+
+            if self.tokenizer.current_value == grammar.keyword_constant[0]:
+                self.vm.WriteArithmetic(grammar.NEG)
 
     def compile_expression(self, tags=True, term_tag=False, expression_lst=False):
         """
