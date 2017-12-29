@@ -675,6 +675,8 @@ class CompilationEngine(object):
 
     def compile_term(self, tags=True, check=False):
         """
+        RUTHI
+
         Compiles a term. This routine is faced with a slight difficulty when
         trying to decide between some of the alternative parsing rules.
         Specifically, if the current token is an identifier, the routine must
