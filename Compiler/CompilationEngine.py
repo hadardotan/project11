@@ -694,12 +694,13 @@ class CompilationEngine(object):
         if (type == grammar.INT_CONST):
             if check:
                 return True
-            self.vm.writePush(grammar.CONST, "")
+            self.vm.writePush(grammar.CONST, self.tokenizer.current_value)
 
-            # keyword
+        # keyword
         elif (type == grammar.KEYWORD and self.tokenizer.keyword() in grammar.keyword_constant):
             if check:
                 return True
+
             self.compile_keyword()
 
             # string constant
