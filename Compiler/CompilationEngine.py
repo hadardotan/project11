@@ -32,7 +32,7 @@ class CompilationEngine(object):
         """
         self.tokenizer = tokenizer.JackTokenizer(input_file, output_file)
         self.symbol_table = symbol.SymbolTable()
-        self.vm = vmwriter.VMwriter()
+        self.vm = vmwriter.VMwriter(self.output)
         self.input = input_file  # already open :)
         self.output = output_file  # already open :)
         self.class_name = "" # current class name
@@ -385,14 +385,14 @@ class CompilationEngine(object):
 
         # TODO symbol table needs to be fixed ?
         self.vm.writeFunction(self.get_vm_function_name(),
-                              self.symbol_table.varCount(grammar.K_VAR))
+                              self.symbol_tables[self.last_pos()].varCount(grammar.K_VAR))
 
         if self.current_subroutine_type == grammar.K_METHOD:
             self.vm.writePush(grammar.K_ARG, 0) # push argument 0
             self.vm.writePop(grammar.POINTER, 0) # pop pointer 0
         elif self.current_subroutine_type == grammar.K_CONSTRUCTOR:
             # push size of object
-            self.vm.writePush(grammar.CONST, self.symbol_table.varCount(grammar.field))
+            self.vm.writePush(grammar.CONST, self.symbol_tables[self.last_pos()].varCount(grammar.field))
             # call Memory.alloc 1
             self.vm.writeCall('Memory.alloc', 1)
             # pop pointer 0
@@ -871,4 +871,79 @@ class CompilationEngine(object):
             self.checkSymbol(";")
 
         # TODO don't forget abt return 0
+
+
+
+    def compile_subroutineCall(self):
+        """
+        HADAR
+
+        compiles subroutine call and writes vm code
+
+
+        :return:
+        """
+
+        # (subroutineName ( expressionList ))
+        if self.tokenizer.get_next()[0] == '(':
+            subroutine_name = self.tokenizer.current_value
+            self.tokenizer.advance()
+            # (
+            self.checkSymbol('(')
+            self.tokenizer.advance()
+
+            # write to vm : push var1
+            self.vm.write_push_var(self.tokenizer.current_value)
+
+            # ,
+            if self.tokenizer.get_next()[0] == ',':
+                self.tokenizer.advance()
+            elif self.tokenizer.get_next()[0] == ')':
+                self.tokenizer.advance()
+
+                # write to vm : call subroutine name
+                self.vm.write_subroutine_call(subroutine_name)
+                return
+
+        # ((className | varName).subroutineName (expressionList))
+        else:
+
+            # write vm : push (className | varName)
+            self.vm.write_push_var(self.tokenizer.current_value)
+            # .
+            self.tokenizer.advance()
+            self.checkSymbol('.')
+            self.tokenizer.advance()
+            # subroutine name
+            subroutine_name = self.tokenizer.current_value
+            self.tokenizer.advance()
+            # (
+            self.checkSymbol('(')
+            self.tokenizer.advance()
+
+            if self.tokenizer.get_next()[0] == ')':
+                self.tokenizer.advance()
+
+                # write to vm : call subroutine name
+                self.vm.write_subroutine_call(subroutine_name)
+                return
+
+        # case there is more than 1 var
+        more_vars = True
+
+        while more_vars:
+            # write to vm : push var
+            self.vm.write_push_var(self.tokenizer.current_value)
+            # check if , or )
+            self.tokenizer.advance()
+            if self.tokenizer.current_value == ')':
+                more_vars =False
+            elif self.tokenizer.current_value == ',':
+                self.tokenizer.advance()
+            else:
+                raise ValueError("illegal subroutine call")
+
+        # write to vm : call subroutine name
+        self.vm.write_subroutine_call(subroutine_name)
+
 
