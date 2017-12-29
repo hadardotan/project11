@@ -38,6 +38,7 @@ NO_TOKEN = -1
 NO_PHRASE = -1
 NO_INDEX = -1
 
+
 # KEYWORD tokens
 K_CLASS = 'class'
 K_CONSTRUCTOR = 'constructor'
@@ -92,6 +93,10 @@ keyword_constant = ["true", "false", "null", "this"]
 unaryOp = ["-", '~']
 
 operators = ['+', '-', '*', '/', '&', '|', '<', '>', '=']
+
+# Arithmetic operations
+arithmetic_op = {'+': 'add', '-': 'sub', '*': 'Math.multiply', '/': 'Math.divide', '&': 'and', '|': 'or',
+                 '<': 'lt', '>': 'gt', '=': 'eq'}
 
 # tokens type
 tokens_types = ['keyword', 'symbol', 'identifier', 'integerConstant', 'stringConstant']

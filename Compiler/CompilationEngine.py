@@ -133,10 +133,6 @@ class CompilationEngine(object):
 
         self.compile_declaration(kind)
 
-
-
-
-
     def compile_declaration(self, kind):
         """
         HADAR
@@ -803,7 +799,7 @@ class CompilationEngine(object):
         op = []
         while self.tokenizer.get_next()[0] in grammar.operators:
             self.tokenizer.advance()
-            op += [self.tokenizer.current_value]
+            op += [self.tokenizer.current_value]    # TODO why array?
             self.checkSymbol(self.tokenizer.current_value)
             self.tokenizer.advance()
             print("^^^^^^^^^^^^66")
@@ -812,6 +808,10 @@ class CompilationEngine(object):
             self.compile_term()
 
         # self.write_arithmetic_to_vm()
+        if op[len(op) - 1] == "*" or op[len(op) - 1] == "/":
+            self.vm.writeCall(grammar.arithmetic_op[op[len(op) - 1]], 2)
+        else:
+            self.vm.WriteArithmetic(grammar.arithmetic_op[op[len(op) - 1]])
 
         return expression_counter
 
