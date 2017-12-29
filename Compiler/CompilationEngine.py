@@ -799,6 +799,7 @@ class CompilationEngine(object):
             self.compile_term()
 
         # (op term)*
+        # TODO : still working on that part :)
         op = []
         while self.tokenizer.get_next()[0] in grammar.operators:
             self.tokenizer.advance()
