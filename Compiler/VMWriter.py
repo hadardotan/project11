@@ -30,7 +30,7 @@ class VMwriter(object):
         :param index:int
         :return:
         """
-        self.output_file.write("pop "+segment+" "+str(index)+"\n" )
+        self.output_file.write("pop "+ str(segment) +" "+ str(index) +"\n" )
 
     def WriteArithmetic(self, command):
         """

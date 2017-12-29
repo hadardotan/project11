@@ -36,6 +36,7 @@ INT_CONST = 4
 STRING_CONS = 5
 NO_TOKEN = -1
 NO_PHRASE = -1
+NO_INDEX = -1
 
 # KEYWORD tokens
 K_CLASS = 'class'

@@ -147,4 +147,6 @@ class SymbolTable(object):
         # else:
         #     return NO_INDEX
 
-
+    def check(self):
+        for key, value in self.counter.items():
+            print(key, value)

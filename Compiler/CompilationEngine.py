@@ -66,7 +66,7 @@ class CompilationEngine(object):
         self.compile_identifier()
 
         # Create new symbol table
-        self.symbol_tables.append(symbol.SymbolTable)
+        self.symbol_tables.append(symbol.SymbolTable())
 
         # {
         self.tokenizer.advance()
@@ -123,6 +123,7 @@ class CompilationEngine(object):
         # 'var'
         if self.tokenizer.current_value == grammar.K_VAR:
             kind = grammar.keyword_2_kind[self.tokenizer.current_value]
+
         else:
             if raise_error:
                 raise ValueError("No 'var' found")
@@ -301,7 +302,7 @@ class CompilationEngine(object):
 
         self.symbol_table.start_subroutine() # TODO
         # create new symbol table
-        self.symbol_tables.append(symbol.SymbolTable)
+        self.symbol_tables.append(symbol.SymbolTable())
 
         if self.current_subroutine_type == grammar.K_METHOD:
             self.symbol_table.define('this', self.class_name, grammar.K_ARG) # TODO
@@ -390,7 +391,7 @@ class CompilationEngine(object):
 
         # TODO symbol table needs to be fixed ?
         self.vm.writeFunction(self.get_vm_function_name(),
-                              self.symbol_tables[self.last_pos()].varCount(grammar.K_VAR))
+                              self.symbol_tables[self.last_pos()].varCount(grammar.keyword_2_kind[grammar.K_VAR]))
 
         if self.current_subroutine_type == grammar.K_METHOD:
             self.vm.writePush(grammar.K_ARG, 0) # push argument 0
@@ -515,14 +516,6 @@ class CompilationEngine(object):
         return (self.tokenizer.current_value in self.type_list)
 
 
-
-    def compile_statements(self):
-        """
-        Compiles a sequence of statements, not
-        including the enclosing {}.
-        :return:
-        """
-
     def checkSymbol(self, symbol, raise_error=True):
         """ Check if the symbol is in the current value"""
         if self.tokenizer.current_value == symbol:
@@ -642,7 +635,7 @@ class CompilationEngine(object):
 
         # get varName from SymbolTable
         position = self.last_pos()
-        while self.symbol_tables[position].indexOf(varName) == symbol.NO_INDEX:
+        while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
             position -= 1
         varName_index = self.symbol_tables[position].indexOf(varName)
 
@@ -753,7 +746,7 @@ class CompilationEngine(object):
                     self.checkSymbol("]")
             elif (self.tokenizer.get_next()[0] == "(") or (self.tokenizer.get_next()[0] == "."):
                 # subroutineCall
-                self.subroutineCall()
+                self.compile_subroutineCall()
 
         else:
             return False
@@ -849,7 +842,7 @@ class CompilationEngine(object):
 
         # subroutineCall
         self.tokenizer.advance()
-        self.subroutineCall()
+        self.compile_subroutineCall()
 
         # ;
         self.tokenizer.advance()
