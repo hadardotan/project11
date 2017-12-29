@@ -3,7 +3,6 @@ import Compiler.JackTokenizer as tokenizer
 import Compiler.JackGrammar as grammar
 import Compiler.SymbolTable as symbol
 import Compiler.VMWriter as vmwriter
-from collections import deque
 
 # This class does the compilation itself. It reads its input from a JackTokenizer
 # and writes its output into a VMWriter. It is organized as a series of
@@ -40,17 +39,14 @@ class CompilationEngine(object):
         self.current_subroutine_name = ""
         self.type_list = [grammar.K_INT, grammar.K_CHAR, grammar.K_BOOLEAN]
         self.label_counter = 0
-        self.if_counter = 0
-        self.while_counter = 0
         self.tokenizer.advance()
-        self.symbol_tables = []
+
         self.compile_class()
 
 
     def compile_class(self):
         """
         HADAR
-        RUTHI
 
         Compiles a complete class.
         :return:
@@ -64,9 +60,6 @@ class CompilationEngine(object):
         # add class type to list of types
         self.type_list.append(self.tokenizer.current_value)
         self.compile_identifier()
-
-        # Create new symbol table
-        self.symbol_tables.append(symbol.SymbolTable)
 
         # {
         self.tokenizer.advance()
@@ -88,8 +81,6 @@ class CompilationEngine(object):
         # }
         self.checkSymbol("}")
 
-        # TODO delete SymbolTable
-        self.symbol_tables.pop()
 
 
     def compile_class_var_dec(self, raise_error=True):
@@ -151,8 +142,7 @@ class CompilationEngine(object):
         name = self.compile_identifier()
 
         # add to symbol table
-        self.symbol_table.define(name, type, kind) # TODO
-        self.symbol_tables[self.last_pos()].define(name, type, kind)
+        self.symbol_table.define(name, type, kind)
 
 
         # (',' varName)*
@@ -197,7 +187,6 @@ class CompilationEngine(object):
 
                 # add to symbol table
                 self.symbol_table.define(name, type, kind)
-                self.symbol_tables[self.last_pos()].define(name, type, kind)
 
             else:
                 more_vars = False
@@ -221,7 +210,7 @@ class CompilationEngine(object):
 
 
 
-    def compile_expression_list2(self): # TODO I did it in compile_term. Check if something is missing
+    def compile_expression_list(self):
         """
         Compiles a (possibly empty) comma separated list of expressions.
 
@@ -236,6 +225,10 @@ class CompilationEngine(object):
 
         :return:
         """
+
+
+
+
 
 
 
@@ -296,13 +289,9 @@ class CompilationEngine(object):
 
         #open symbol table
 
-        self.symbol_table.start_subroutine() # TODO
-        # create new symbol table
-        self.symbol_tables.append(symbol.SymbolTable)
-
+        self.symbol_table.start_subroutine()
         if self.current_subroutine_type == grammar.K_METHOD:
-            self.symbol_table.define('this', self.class_name, grammar.K_ARG) # TODO
-            self.symbol_tables[self.last_pos()].define('this', self.class_name, grammar.K_ARG)
+            self.symbol_table.define('this', self.class_name, grammar.K_ARG)
 
         # (
         self.tokenizer.advance()
@@ -323,8 +312,7 @@ class CompilationEngine(object):
         # subroutine body
         self.tokenizer.advance()
 
-        # TODO delete symbolTable
-        self.symbol_tables.pop()
+
 
 
     def compile_subroutineBody(self):
@@ -382,8 +370,6 @@ class CompilationEngine(object):
 
         :return:
         """
-
-        # TODO symbol table needs to be fixed ?
         self.vm.writeFunction(self.get_vm_function_name(),
                               self.symbol_table.varCount(grammar.K_VAR))
 
@@ -469,8 +455,6 @@ class CompilationEngine(object):
 
         return self.tokenizer.current_value in [grammar.K_CONSTRUCTOR, grammar.K_FUNCTION, grammar.K_METHOD]
 
-
-
     def compile_parameter_list(self):
         """
         HADAR
@@ -488,8 +472,7 @@ class CompilationEngine(object):
                 if self.tokenizer.current_token_type == grammar.IDENTIFIER:
                     name = self.tokenizer.current_value
                     #add to symbol table
-                    self.symbol_table.define(name, type, grammar.K_ARG) # TODO
-                    self.symbol_tables[self.last_pos()].define(name, type, grammar.K_ARG)
+                    self.symbol_table.define(name, type, grammar.K_ARG)
                     self.tokenizer.advance()
 
                     if self.tokenizer.current_value == ',':
@@ -502,6 +485,13 @@ class CompilationEngine(object):
 
         return True
 
+
+    def compile_var_dec(self, raise_error=True):
+        """
+        Compiles a var declaration.
+        :param raise_error: raises error if True, returns otherwise
+        :return:
+        """
 
     def is_type(self):
         """ Checks if the type of the current type is in the type_list
@@ -526,313 +516,107 @@ class CompilationEngine(object):
             if raise_error:
                 raise ValueError("No symbol " + symbol + " found")
 
-    def compile_if(self):
+
+
+#################################33
+
+
+    def compile_subroutineCall(self):
         """
-        RUTHI
+        HADAR
 
-        Compiles an if statement, possibly with a trailing else clause.
-        :return:
-        """
-        self.if_counter += 1
-
-        # (
-        self.tokenizer.advance()
-        self.checkSymbol("(")
-
-        # expression
-        self.tokenizer.advance()
-        self.compile_expression(True, True)
-
-        self.vm.WriteArithmetic('neg')
-        self.vm.WriteIf("L_" + self.if_counter.__str__() + "_1")
-
-        # )
-        self.tokenizer.advance()
-        self.checkSymbol(")")
-
-        # {
-        self.tokenizer.advance()
-        self.checkSymbol("{")
-
-        # statements
-        self.tokenizer.advance()
-        self.compile_statements()
-
-        self.vm.WriteGoto("L_" + self.if_counter.__str__() + "_2")
-        self.vm.WriteLabel("L_" + self.if_counter.__str__() + "_1")
-
-        # }
-        self.checkSymbol("}")
-
-        # (else {statement})?
-        else_param = False
-
-        if self.tokenizer.get_next()[0] == "else":
-            self.tokenizer.advance()
-            if self.tokenizer.current_value == "else":
-                else_param = True
-        if (else_param):
-            # {
-            self.tokenizer.advance()
-            self.checkSymbol("{")
-
-            # statement
-            self.tokenizer.advance()
-            self.compile_statements()
-
-            # }
-            self.checkSymbol("}")
-
-            self.vm.WriteLabel("L_" + self.if_counter.__str__() + "_2")
-
-    def compile_while(self):
-        """
-        RUTHI
-
-        Compiles a while statement.
-        :return:
-        """
-        self.while_counter += 1
-
-        # (
-        self.tokenizer.advance()
-        self.checkSymbol("(")
-        # expression
-        self.tokenizer.advance()
-
-        self.vm.WriteLabel("L_" + self.while_counter.__str__() + "_1")
-        self.compile_expression()
-        self.vm.WriteArithmetic('neg')
-        self.vm.WriteIf("L_" + self.while_counter.__str__() + "_2")
-
-        # )
-        self.tokenizer.advance()
-        self.checkSymbol(")")
-
-        # {
-        self.tokenizer.advance()
-        self.checkSymbol("{")
-
-        # statement
-        self.tokenizer.advance()
-        self.compile_statements()
-
-        self.vm.WriteGoto("L_" + self.while_counter.__str__() + "_1")
-        self.vm.WriteLabel("L_" + self.while_counter.__str__() + "_2")
-
-        # }
-        self.checkSymbol("}")
+        compiles subroutine call and writes vm code
 
 
-    def compile_let(self):
-        """
-        RUTHI
-
-        Compiles a let statement.
-        """
-
-        # varName
-        self.tokenizer.advance()
-        varName = self.compile_identifier()
-
-        # get varName from SymbolTable
-        position = self.last_pos()
-        while self.symbol_tables[position].indexOf(varName) == symbol.NO_INDEX:
-            position -= 1
-        varName_index = self.symbol_tables[position].indexOf(varName)
-
-        # [
-        advance_token = False
-        self.tokenizer.advance()
-        check_expression = False
-        if self.checkSymbol("[", False):
-            check_expression = True
-        if check_expression:
-            # expression
-            self.tokenizer.advance()
-            self.compile_expression(True, True)
-            # ]
-            self.tokenizer.advance()
-            self.checkSymbol("]")
-            advance_token = True
-
-        # =
-        if (advance_token):
-            self.tokenizer.advance()
-        self.checkSymbol("=")
-
-        # expression
-        self.tokenizer.advance()
-        self.compile_expression(True, True)
-
-        # ;
-        self.tokenizer.advance()
-        self.checkSymbol(";")
-
-        # push varName
-        segment = self.symbol_tables[position].kindOf(varName)
-        self.vm.writePop(segment, varName_index)
-
-    def compile_term(self, tags=True, check=False):
-        """
-        Compiles a term. This routine is faced with a slight difficulty when
-        trying to decide between some of the alternative parsing rules.
-        Specifically, if the current token is an identifier, the routine must
-        distinguish between a variable, an array entry, and a subroutine call.
-        A single look-ahead token, which may be one of [, (, or .
-        suffices to distinguish between the three possibilities.
-        Any other token is not part of this term and should not be advanced
-        over.
         :return:
         """
 
-        # Integer constant, String constant, keyword constant
-        type = self.tokenizer.token_type()
-        if (type == grammar.INT_CONST):
-            if check:
-                return True
-            self.vm.writePush(grammar.CONST, "")
-        elif (type == grammar.KEYWORD and self.tokenizer.keyword() in grammar.keyword_constant):
-            if check:
-                return True # TODO what are we suppose to return here?
-        elif type == grammar.STRING_CONS:
-            if check:
-                return True
-                # TODO what are we suppose to return here?
-        # ( expression )
-        elif self.tokenizer.current_value == "(":
-            if check:
-                return True
-            self.checkSymbol("(")
+        # (subroutineName ( expressionList ))
+        if self.tokenizer.get_next()[0] == '(':
+            subroutine_name = self.tokenizer.current_value
             self.tokenizer.advance()
-            self.compile_expression(True, True)
+            # (
+            self.checkSymbol('(')
             self.tokenizer.advance()
-            self.checkSymbol(")")
 
-        # unaryOp term
-        elif self.tokenizer.current_value in grammar.unaryOp:
-            if check:
-                return True
-            op = self.tokenizer.current_value
-            self.checkSymbol(self.tokenizer.current_value)
-            self.tokenizer.advance()
-            self.compile_term()
-            # op
-            self.vm.output_file.write(op)
+            # write to vm : push var1
+            self.vm.write_push_var(self.tokenizer.current_value)
 
-        # varName ([ expression ])?
-        elif type == grammar.IDENTIFIER:
-            if check:
-                return True
-            # push varName
-            self.vm.writePush(self.tokenizer.current_value, "")
-
-            if self.tokenizer.get_next()[0] == "[":
-                self.compile_identifier()
+            # ,
+            if self.tokenizer.get_next()[0] == ',':
+                self.tokenizer.advance()
+            elif self.tokenizer.get_next()[0] == ')':
                 self.tokenizer.advance()
 
-                if self.checkSymbol("[", False):
-                    self.tokenizer.advance()
-                    self.compile_expression()
-                    self.tokenizer.advance()
-                    self.checkSymbol("]")
-            elif (self.tokenizer.get_next()[0] == "(") or (self.tokenizer.get_next()[0] == "."):
-                # subroutineCall
-                self.subroutineCall()
+                # write to vm : call subroutine name
+                self.vm.write_subroutine_call(subroutine_name)
+                return
 
+        # ((className | varName).subroutineName (expressionList))
         else:
-            return False
 
-        return True
-
-    def compile_expression(self, tags=True, term_tag=False, expression_lst=False):
-        """
-        RUTHI
-
-        Compiles an expression.
-        :return:
-        """
-        expression_counter = 0
-
-        # term
-        if self.compile_term(False, True) is False:
-            return False
-        else:
-            if expression_lst:
-                return True
-            self.compile_term()
-
-        # (op term)*
-        while self.tokenizer.get_next()[0] in grammar.operators:
+            # write vm : push (className | varName)
+            self.vm.write_push_var(self.tokenizer.current_value)
+            # .
             self.tokenizer.advance()
-            self.checkSymbol(self.tokenizer.current_value)
+            self.checkSymbol('.')
             self.tokenizer.advance()
-            self.compile_term()
-
-        return expression_counter
-
-    def compile_expression_list(self):
-        """
-        Compiles a (possibly empty) comma separated list of expressions.
-        :return:
-        """
-
-        # expression?
-        if self.compile_expression(False, False, True) is not False:
-            # (',' expression)*
-            self.compile_expression(True, True)
+            # subroutine name
+            subroutine_name = self.tokenizer.current_value
             self.tokenizer.advance()
-            while self.tokenizer.current_value == ',':
-                self.checkSymbol(",")
-                # expression
-                self.tokenizer.advance()
-                self.compile_expression(True, True)
+            # (
+            self.checkSymbol('(')
+            self.tokenizer.advance()
+
+            if self.tokenizer.get_next()[0] == ')':
                 self.tokenizer.advance()
 
+                # write to vm : call subroutine name
+                self.vm.write_subroutine_call(subroutine_name)
+                return
 
-    def last_pos(self):
-        """
-        RUTHI
+        # case there is more than 1 var
+        more_vars = True
 
-        :return: position of the last symbol table in the array
-        """
-        return len(self.symbol_tables) - 1
-
-    def compile_do(self):
-        """
-        RUTHI
-
-        Compiles a do statement
-        :return:
-        """
-
-        # subroutineCall
-        self.tokenizer.advance()
-        self.subroutineCall()
-
-        # ;
-        self.tokenizer.advance()
-        self.checkSymbol(";")
-
-
-    def compile_return(self):
-        """
-        RUTHI
-
-        Compiles a return statement.
-        :return:
-        """
-
-        # expression?
-        if self.tokenizer.get_next()[0] != ";":
+        while more_vars:
+            # write to vm : push var
+            self.vm.write_push_var(self.tokenizer.current_value)
+            # check if , or )
             self.tokenizer.advance()
-            self.compile_expression()
-            self.tokenizer.advance()
-            self.checkSymbol(";")
-        else:
-            # ;
-            self.tokenizer.advance()
-            self.checkSymbol(";")
+            if self.tokenizer.current_value == ')':
+                more_vars =False
+            elif self.tokenizer.current_value == ',':
+                self.tokenizer.advance()
+            else:
+                raise ValueError("illegal subroutine call")
 
-        # TODO don't forget abt return 0
+        # write to vm : call subroutine name
+        self.vm.write_subroutine_call(subroutine_name)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

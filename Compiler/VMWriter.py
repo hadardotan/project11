@@ -92,6 +92,19 @@ class VMwriter(object):
         """
         self.output_file.write("return" + "\n")
 
+    def write_push_var(self, var):
+        self.output_file.write("push " +var+ "\n")
+
+
+    def write_subroutine_call(self, subroutine_name):
+        """
+        calling subroutine with no args
+        :param subroutine_name:
+        :return:
+        """
+        self.output_file.write("call " + subroutine_name + "\n")
+
+
     def close(self):
         """
         Closes the output file
