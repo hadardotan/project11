@@ -48,4 +48,4 @@ if __name__ == "__main__":
 
 
 
-main("C:\nand\nand2tetris\projects\11\Average")
+main("C:\nand\nand2tetris\projects\11\Seven")

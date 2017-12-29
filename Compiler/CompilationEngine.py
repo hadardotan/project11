@@ -61,6 +61,7 @@ class CompilationEngine(object):
 
         #class name
         self.tokenizer.advance()
+        self.class_name = self.tokenizer.current_value
         # add class type to list of types
         self.type_list.append(self.tokenizer.current_value)
         self.compile_identifier()
@@ -882,66 +883,57 @@ class CompilationEngine(object):
         :return:
         """
 
-        # (subroutineName ( expressionList ))
-        if self.tokenizer.get_next()[0] == '(':
-            subroutine_name = self.tokenizer.current_value
-            self.tokenizer.advance()
-            # (
-            self.checkSymbol('(')
-            self.tokenizer.advance()
+        if self.tokenizer.token_type() == grammar.IDENTIFIER:
 
-            # write to vm : push var1
-            self.vm.write_push_var(self.tokenizer.current_value)
-
-            # ,
-            if self.tokenizer.get_next()[0] == ',':
+            # check (subroutineName ( expressionList ))
+            if self.tokenizer.get_next()[0] == "(":
+                subroutine_name = self.tokenizer.current_value
                 self.tokenizer.advance()
-            elif self.tokenizer.get_next()[0] == ')':
+                # (
                 self.tokenizer.advance()
+                # expression list
+                self.tokenizer.advance()
+                self.compile_expression_list() # writes to vm also
+                self.checkSymbol(")")
 
                 # write to vm : call subroutine name
                 self.vm.write_subroutine_call(subroutine_name)
-                return
 
-        # ((className | varName).subroutineName (expressionList))
-        else:
+            # check ((className | varName).subroutineName (expressionList))
+            elif self.tokenizer.get_next()[0] == ".":
 
-            # write vm : push (className | varName)
-            self.vm.write_push_var(self.tokenizer.current_value)
-            # .
-            self.tokenizer.advance()
-            self.checkSymbol('.')
-            self.tokenizer.advance()
-            # subroutine name
-            subroutine_name = self.tokenizer.current_value
-            self.tokenizer.advance()
-            # (
-            self.checkSymbol('(')
-            self.tokenizer.advance()
+                # check if type
+                if self.tokenizer.current_value in self.type_list:
+                    #save type
+                    type = self.tokenizer.current_value
+                # else it is a var - get varType var type
+                else:
+                    position = self.last_pos()
+                    while self.symbol_tables[position].indexOf(self.tokenizer.current_value) == grammar.NO_INDEX:
+                        position -= 1
+                    type = self.symbol_tables[position].typeOf(self.tokenizer.current_value)
 
-            if self.tokenizer.get_next()[0] == ')':
+                # .
                 self.tokenizer.advance()
-
-                # write to vm : call subroutine name
-                self.vm.write_subroutine_call(subroutine_name)
-                return
-
-        # case there is more than 1 var
-        more_vars = True
-
-        while more_vars:
-            # write to vm : push var
-            self.vm.write_push_var(self.tokenizer.current_value)
-            # check if , or )
-            self.tokenizer.advance()
-            if self.tokenizer.current_value == ')':
-                more_vars =False
-            elif self.tokenizer.current_value == ',':
+                # subroutineName
                 self.tokenizer.advance()
-            else:
-                raise ValueError("illegal subroutine call")
+                subroutine_name = self.tokenizer.current_value
+                # (
+                self.tokenizer.advance()
+                self.checkSymbol("(")
+                self.tokenizer.advance()
+                self.compile_expression_list()
+                # )
+                self.checkSymbol(")")
+                # write to vm : call type.subroutine name
+                self.vm.write_subroutine_call(type+'.'+subroutine_name)
 
-        # write to vm : call subroutine name
-        self.vm.write_subroutine_call(subroutine_name)
+
+
+
+
+
+
+
 
 
