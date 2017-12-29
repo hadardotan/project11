@@ -1,4 +1,5 @@
 import sys, os, os.path, glob, re
+from Compiler.CompilationEngine import CompilationEngine
 
 
 def analyze(files_to_process):
@@ -18,7 +19,7 @@ def analyze(files_to_process):
         input_file = open(input_file_name,'r')
         output_file = open(output_file_name,'w')
 
-
+        compiler = CompilationEngine(input_file, output_file)
 
 
 def main(path):
@@ -47,3 +48,4 @@ if __name__ == "__main__":
 
 
 
+main("C:\nand\nand2tetris\projects\11\Average")

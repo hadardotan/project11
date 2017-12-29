@@ -30,15 +30,15 @@ class CompilationEngine(object):
         called must be compileClass().
         :param input_file:
         """
+        self.input = input_file  # already open :)
+        self.output = output_file  # already open :)
         self.tokenizer = tokenizer.JackTokenizer(input_file, output_file)
         self.symbol_table = symbol.SymbolTable()
         self.vm = vmwriter.VMwriter(self.output)
-        self.input = input_file  # already open :)
-        self.output = output_file  # already open :)
         self.class_name = "" # current class name
         self.current_subroutine_type = 0
         self.current_subroutine_name = ""
-        self.type_list = [grammar.K_INT, grammar.K_CHAR, grammar.K_BOOLEAN]
+        self.type_list = grammar.jack_types + grammar.jack_libaries
         self.label_counter = 0
         self.if_counter = 0
         self.while_counter = 0
@@ -79,7 +79,6 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
 
         # subroutineDec*
-
         if self.tokenizer.current_value in [grammar.K_CONSTRUCTOR,
                                             grammar.K_FUNCTION, grammar.K_METHOD]:
             while(self.compile_subroutine(False)):
@@ -131,6 +130,8 @@ class CompilationEngine(object):
                 return False
 
         self.compile_declaration(kind)
+
+
 
 
 
@@ -267,6 +268,8 @@ class CompilationEngine(object):
         The first argument (argument number 0) always refers to the this object.
         :return:
         """
+
+
         if self.is_subroutine():
             self.current_subroutine_type = self.tokenizer.current_value
         else:
@@ -308,20 +311,22 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.checkSymbol("(")
 
-        # parameterList
+        # parameterList ?
         self.tokenizer.advance()
-        if self.compile_parameter_list() is not False:
-            self.tokenizer.advance()
-        else:
-            if raise_error:
-                raise ValueError("illegal parameter list in subroutine")
-            return False
+        if self.tokenizer.current_value != ")":
+            if self.compile_parameter_list() is not False:
+                self.tokenizer.advance()
+            else:
+                if raise_error:
+                    raise ValueError("illegal parameter list in subroutine")
+                return False
 
         # )
         self.checkSymbol(")")
 
         # subroutine body
         self.tokenizer.advance()
+        self.compile_subroutineBody()
 
         # TODO delete symbolTable
         self.symbol_tables.pop()

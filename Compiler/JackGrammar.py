@@ -10,14 +10,22 @@ var = 4
 keyword_2_kind = {'static': static, 'field' : field, 'arg' : arg, 'var' : var}
 
 
+
+
+# Jack libaries
+L_MATH = 'Math'
+L_KEYBOARD = 'Keyboard'
+L_ARRAY = 'Array'
+L_MEMORY = 'Memory'
+L_OUTPUT = 'Output'
+L_SCREEN = 'Screen'
+L_STRING = 'String'
+L_SYS = 'Sys'
+
+jack_libaries = [L_MATH, L_KEYBOARD, L_ARRAY, L_MEMORY, L_OUTPUT, L_SCREEN, L_STRING, L_SYS]
+
 # The Jack language includes five types of terminal elements (tokens):
 # KEYWORD, SYMBOL, IDENTIFIER,INT_CONST,STRING_CONS
-
-
-
-
-
-
 
 TRUE = 1
 # tokens CONSTANTS
@@ -61,7 +69,8 @@ CONST = 'constant'
 NEG = 'neg'
 
 
-
+#Jack types
+jack_types = [K_INT, K_CHAR, K_BOOLEAN]
 
 
 keywords = [K_CLASS ,K_CONSTRUCTOR ,K_FUNCTION ,K_METHOD ,K_FIELD ,K_STATIC

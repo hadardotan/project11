@@ -14,27 +14,31 @@ from Compiler.JackGrammar import *
 import Compiler.JackGrammar
 
 
-class Kind(Enum):
-    """
-    enum represent kind of identifier may appear in the symbol table
-    """
+# class Kind(Enum):
+#     """
+#     enum represent kind of identifier may appear in the symbol table
+#     """
+#
+#
+#     def get_seg(self):
+#         if self is Kind.var:
+#             return K_VAR
+#         elif self is Kind.field:
+#             return K_FIELD
+#         elif self is Kind.arg:
+#             return K_ARG
+#         elif self is Kind.static:
+#             return K_STATIC
 
-    def get_seg(self):
-        if self is Kind.var:
-            return K_VAR
-        elif self is Kind.field:
-            return K_FIELD
-        elif self is Kind.arg:
-            return K_ARG
-        elif self is Kind.static:
-            return K_STATIC
+STATIC = 1
+FIELD = 2
+ARG = 3
+VAR = 4
 
 
 C_TYPE = 0
 C_KIND = 1
 C_INDEX = 2
-NO_TYPE, NO_KIND, NO_INDEX = -1
-
 
 class SymbolTable(object):
 
@@ -56,8 +60,7 @@ class SymbolTable(object):
 
         self.class_table = {}
         self.subroutine_table = {}
-        self.counter = {Kind.var : 0, Kind.static : 0, Kind.arg : 0,
-                        Kind.field : 0}
+        self.counter = {VAR : 0, STATIC : 0, ARG : 0, FIELD : 0}
 
     def start_subroutine(self):
         """
@@ -68,7 +71,7 @@ class SymbolTable(object):
         :return:
         """
 
-        self.counter[Kind.arg], self.counter[Kind.var] = 0, 0
+        self.counter[ARG], self.counter[VAR] = 0, 0
         self.subroutine_table = {}
 
 
@@ -83,9 +86,10 @@ class SymbolTable(object):
         :param kind:(STATIC,FIELD, ARG, or VAR)
         :return:
         """
-        if kind == Kind.static or kind == Kind.field:
+        if kind == STATIC or kind == FIELD:
             self.class_table[name] = (type, kind, self.counter[kind])
         else:
+            print("%%%%%%%%%%%%%%%%%%%%%%55")
             self.subroutine_table[name] = (type, kind, self.counter[kind])
 
         self.counter[kind] += 1
@@ -112,8 +116,8 @@ class SymbolTable(object):
             return self.subroutine_table[name][C_KIND]
         elif name in self.class_table:
             return self.class_table[name][C_KIND]
-        else:
-            return NO_KIND
+        # else:
+        #     return NO_KIND
 
 
     def typeOf(self, name):
@@ -126,8 +130,8 @@ class SymbolTable(object):
             return self.subroutine_table[name][C_TYPE]
         elif name in self.class_table:
             return self.class_table[name][C_TYPE]
-        else:
-            return NO_TYPE
+        # else:
+        #     return NO_TYPE
 
 
     def indexOf(self, name):
@@ -140,7 +144,7 @@ class SymbolTable(object):
             return self.subroutine_table[name][C_INDEX]
         elif name in self.class_table:
             return self.class_table[name][C_INDEX]
-        else:
-            return NO_INDEX
+        # else:
+        #     return NO_INDEX
 
 
