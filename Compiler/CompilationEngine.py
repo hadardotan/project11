@@ -799,11 +799,18 @@ class CompilationEngine(object):
             self.compile_term()
 
         # (op term)*
+        op = []
         while self.tokenizer.get_next()[0] in grammar.operators:
             self.tokenizer.advance()
+            op += [self.tokenizer.current_value]
             self.checkSymbol(self.tokenizer.current_value)
             self.tokenizer.advance()
+            print("^^^^^^^^^^^^66")
+            print(self.tokenizer.current_value)
+            # push args for arithmetic action
             self.compile_term()
+
+        # self.write_arithmetic_to_vm()
 
         return expression_counter
 
