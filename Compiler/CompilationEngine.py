@@ -653,16 +653,17 @@ class CompilationEngine(object):
         while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
             position -= 1
         varName_index = self.symbol_tables[position].indexOf(varName)
+        varName_seg = self.get_segment_by_kind(self.symbol_tables[position].kindOf(varName))
 
 
         # [
         advance_token = False
         self.tokenizer.advance()
-        check_expression = False
+        is_list, check_expression = False, False
         if self.checkSymbol("[", False):
-            check_expression = True
+            is_list, check_expression = True, True
             # push var_seg var_index -> if a[3] pushes a_seg a_index
-
+            self.vm.writePush(varName_seg, varName_index)
 
         if check_expression:
             # expression
@@ -672,6 +673,9 @@ class CompilationEngine(object):
             self.tokenizer.advance()
             self.checkSymbol("]")
             advance_token = True
+
+            # add
+            self.vm.WriteArithmetic('add')
 
         # =
         if (advance_token):
@@ -686,10 +690,16 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.checkSymbol(";")
 
+
         # pop varName
         kind = self.symbol_tables[position].kindOf(varName)
         seg = grammar.kind_2_write[kind]
         self.vm.writePop(seg, varName_index)
+
+        if is_list:
+            # vm : pop pointer 1
+            self.vm.writePop(grammar.POINTER, "1")
+
 
     def compile_term(self, tags=True, check=False):
         """
