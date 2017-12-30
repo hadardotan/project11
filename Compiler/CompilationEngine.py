@@ -644,38 +644,24 @@ class CompilationEngine(object):
         # compile varName
         self.tokenizer.advance()
         varName = self.compile_identifier()
-
-        # get varName from SymbolTable
         position = self.last_pos()
-        print(varName)
-        print(self.symbol_tables[position].indexOf(varName))
-        while self.symbol_tables[position].indexOf(varName) in [grammar.NO_INDEX, None]: # is none
+        while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
             position -= 1
-        varName_index = self.symbol_tables[position].indexOf(varName)
-        varName_seg = self.get_segment_by_kind(self.symbol_tables[position].kindOf(varName))
+        # get varName from SymbolTable
+        print(varName)
+        varName_index = self.get_varName_index(varName, position)
+        varName_seg = self.get_varName_segment(varName, position)
 
         # handle array
         # [
-        advance_token, is_list, check_expression = False, False, False
+        advance_token, is_list = False, False
 
         if self.tokenizer.get_next()[0] == "[":
             is_list = True
         self.tokenizer.advance()
         if is_list:
-            self.checkSymbol('[')
-            check_expression = True
-            # push var_seg var_index -> if a[3] pushes a_seg a_index
-            self.vm.writePush(varName_seg, varName_index)
-        if check_expression:
-            #  compile expression
-            self.tokenizer.advance()
-            self.compile_expression(True, True)
-            # ]
-            self.tokenizer.advance()
-            self.checkSymbol("]")
+            self.compile_array_dec(varName_seg, varName_index)
             advance_token = True
-            # add
-            self.vm.WriteArithmetic('add')
 
         # =
         if (advance_token):
@@ -696,6 +682,25 @@ class CompilationEngine(object):
             kind = self.symbol_tables[position].kindOf(varName)
             seg = grammar.kind_2_write[kind]
             self.vm.writePop(seg, varName_index)
+
+
+    def compile_array_dec(self, var_seg, var_index):
+        """
+
+        :return:
+        """
+        # [
+        self.checkSymbol('[')
+        self.tokenizer.advance()
+        print(var_seg, var_index)
+        self.vm.writePush(var_seg, str(var_index)) # push array pointer to stack
+        self.compile_expression(True, True)
+        self.tokenizer.advance()
+        # ]
+        self.checkSymbol(']')
+        # add
+        self.vm.WriteArithmetic('add')
+
 
     def write_push_pop_for_list(self):
         """
@@ -773,31 +778,26 @@ class CompilationEngine(object):
         elif type == grammar.IDENTIFIER:
             if check:
                 return True
-            # push varName
-            # get varName index in symbolTable
-            position = self.last_pos()
+
+
+            # information about var
             varName = self.tokenizer.current_value
+            position = self.last_pos()
             while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
                 position -= 1
-            varName_index = self.symbol_tables[position].indexOf(varName)
-            varName_kind = self.symbol_tables[position].kindOf(varName)
+            varName_index = self.get_varName_index(varName, position)
+            varName_segment = self.get_varName_segment(varName, position)
 
-            ######## HADAR ADD
-            segment = self.get_segment_by_kind(varName_kind)
 
             if varName_index != None:
-                self.vm.writePush(segment, varName_index)
+                # push varName
+                self.vm.writePush(varName_segment, varName_index)
 
-
-            if self.tokenizer.get_next()[0] == "[":
-                self.compile_identifier()
+            # check if array in expression
+            if self.tokenizer.get_next()[0] == '[':
                 self.tokenizer.advance()
+                self.compile_array_dec(varName_segment, varName_index)
 
-                if self.checkSymbol("[", False):
-                    self.tokenizer.advance()
-                    self.compile_expression()
-                    self.tokenizer.advance()
-                    self.checkSymbol("]")
             elif (self.tokenizer.get_next()[0] == "(") or (self.tokenizer.get_next()[0] == "."):
                 # subroutineCall
                 self.compile_subroutineCall()
@@ -818,6 +818,17 @@ class CompilationEngine(object):
             self.vm.writePush(grammar.CONST, ord(string[i]))
             self.vm.writeCall("String.appendChar", 2)
 
+
+    def get_varName_index(self, varName, position):
+        varName_index = -1
+        varName_index = self.symbol_tables[position].indexOf(varName)
+        return varName_index
+
+
+    def get_varName_segment(self, varName, position):
+        varName_kind = self.symbol_tables[position].kindOf(varName)
+        segment = self.get_segment_by_kind(varName_kind)
+        return segment
 
     def compile_keyword(self):
         """
@@ -851,7 +862,6 @@ class CompilationEngine(object):
             self.compile_term()
 
         # (op term)*
-        # TODO : still working on that part :)
         op = []
         while self.tokenizer.get_next()[0] in grammar.operators:
             self.tokenizer.advance()
