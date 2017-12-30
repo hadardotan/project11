@@ -87,7 +87,6 @@ class SymbolTable(object):
         if kind == STATIC or kind == FIELD:
             self.class_table[name] = (type, kind, self.counter[kind])
         else:
-            print("%%%%%%%%%%%%%%%%%%%%%%55")
             self.subroutine_table[name] = (type, kind, self.counter[kind])
 
         self.counter[kind] += 1

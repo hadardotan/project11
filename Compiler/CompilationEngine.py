@@ -641,7 +641,7 @@ class CompilationEngine(object):
         Compiles a let statement.
         """
 
-        # varName
+        # compile varName
         self.tokenizer.advance()
         varName = self.compile_identifier()
 
@@ -654,25 +654,26 @@ class CompilationEngine(object):
         varName_index = self.symbol_tables[position].indexOf(varName)
         varName_seg = self.get_segment_by_kind(self.symbol_tables[position].kindOf(varName))
 
-
+        # handle array
         # [
-        advance_token = False
+        advance_token, is_list, check_expression = False, False, False
+
+        if self.tokenizer.get_next()[0] == "[":
+            is_list = True
         self.tokenizer.advance()
-        is_list, check_expression = False, False
-        if self.checkSymbol("[", False):
-            is_list, check_expression = True, True
+        if is_list:
+            self.checkSymbol('[')
+            check_expression = True
             # push var_seg var_index -> if a[3] pushes a_seg a_index
             self.vm.writePush(varName_seg, varName_index)
-
         if check_expression:
-            # expression
+            #  compile expression
             self.tokenizer.advance()
             self.compile_expression(True, True)
             # ]
             self.tokenizer.advance()
             self.checkSymbol("]")
             advance_token = True
-
             # add
             self.vm.WriteArithmetic('add')
 
@@ -681,7 +682,7 @@ class CompilationEngine(object):
             self.tokenizer.advance()
         self.checkSymbol("=")
 
-        # expression
+        # compile expression
         self.tokenizer.advance()
         self.compile_expression(True, True)
 
@@ -689,15 +690,24 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.checkSymbol(";")
 
-
-        # pop varName
-        kind = self.symbol_tables[position].kindOf(varName)
-        seg = grammar.kind_2_write[kind]
-        self.vm.writePop(seg, varName_index)
-
         if is_list:
-            # vm : pop pointer 1
-            self.vm.writePop(grammar.POINTER, "1")
+            self.write_push_pop_for_list()
+        else: # pop value into varName
+            kind = self.symbol_tables[position].kindOf(varName)
+            seg = grammar.kind_2_write[kind]
+            self.vm.writePop(seg, varName_index)
+
+    def write_push_pop_for_list(self):
+        """
+        writes to vm commands for list index
+        :return:
+        """
+        self.vm.writePop(grammar.TEMP, grammar.TEMP_ARRAY_INDEX) # pop temp 0
+        self.vm.writePop(grammar.POINTER, '1') # pop expression (from[ ]) + index to pointer
+        self.vm.writePush(grammar.TEMP, grammar.TEMP_ARRAY_INDEX) # push temp 0
+        self.vm.writePop(grammar.THAT, '0') # pop that 0
+
+
 
 
     def compile_term(self, tags=True, check=False):

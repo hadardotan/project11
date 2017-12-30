@@ -72,7 +72,7 @@ NOT = 'not'
 NEG = 'neg'
 TEMP = 'temp'
 LOCAL = 'local'
-
+THAT = 'that'
 
 #Jack types
 jack_types = [K_INT, K_CHAR, K_BOOLEAN]
@@ -127,3 +127,6 @@ RE_COMMENT3_COMPILED = re.compile(RE_COMMENT3)
 RE_WHITESPACES_COMPILED = re.compile(RE_WHITESPACES)
 
 
+# temp registers
+TEMP_RETURN_INDEX = 1     # use to pop unused return value
+TEMP_ARRAY_INDEX = 0      # used to save values to assign to array
