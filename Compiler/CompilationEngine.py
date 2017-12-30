@@ -689,7 +689,6 @@ class CompilationEngine(object):
 
         # Integer constant, String constant, keyword constant
         type = self.tokenizer.token_type()
-
         # integer constant
         if (type == grammar.INT_CONST):
             if check:
@@ -735,7 +734,13 @@ class CompilationEngine(object):
             if check:
                 return True
             # push varName
-            self.vm.writePush(grammar.LOCAL, "1")
+            # get varName index in symbolTable
+            position = self.last_pos()
+            varName = self.tokenizer.current_value
+            while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
+                position -= 1
+            varName_index = self.symbol_tables[position].indexOf(varName)
+            self.vm.writePush(grammar.LOCAL, varName_index)
 
             if self.tokenizer.get_next()[0] == "[":
                 self.compile_identifier()
