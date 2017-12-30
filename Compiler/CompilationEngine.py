@@ -315,9 +315,9 @@ class CompilationEngine(object):
             if self.compile_parameter_list() is not False:
                 self.tokenizer.advance()
             else:
-                if raise_error:
+                if self.tokenizer.current_value != ')' and raise_error:
                     raise ValueError("illegal parameter list in subroutine")
-                return False
+
 
         # )
         self.checkSymbol(")")
@@ -500,8 +500,8 @@ class CompilationEngine(object):
                     self.tokenizer.advance()
                     if self.tokenizer.current_value == ',':
                         self.tokenizer.advance()
-                    elif self.tokenizer.current_value == ')':
-                        more_parameters = False
+            # elif self.tokenizer.current_value == ')':
+            #     more_parameters = False
 
             else:
                 return False

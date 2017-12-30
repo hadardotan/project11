@@ -11,8 +11,6 @@ from Compiler.JackGrammar import *
 # table: one for the class-scope and another one for the subroutine-scope. When a new subroutine
 # is started, the subroutine-scope table should be cleared.
 
-import Compiler.JackGrammar
-
 
 # class Kind(Enum):
 #     """
