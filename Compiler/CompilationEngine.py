@@ -45,6 +45,7 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.symbol_tables = []
         self.compile_class()
+        self.return_void = False
 
 
     def compile_class(self):
@@ -293,7 +294,7 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         type = self.tokenizer.current_value
         if self.current_is_void_or_type():
-            return_type = self.tokenizer.current_value
+            self.return_type = self.tokenizer.current_value
         else:
             if raise_error:
                 raise ValueError("No keyword found in subroutine")
@@ -342,10 +343,6 @@ class CompilationEngine(object):
         # delete symbol table
         self.symbol_tables.pop()
 
-        if return_type == grammar.K_VOID:
-
-            self.vm.writePush(grammar.CONST, 0)
-            self.vm.writeReturn()
 
 
     def compile_subroutineBody(self):
@@ -454,7 +451,8 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
 
             elif self.tokenizer.current_value == "return":
-                self.compile_return()
+                self.compile_return(self.return_type)
+                self.return_type = False
                 self.tokenizer.advance()
             else:
                 more_statements = False
@@ -909,7 +907,7 @@ class CompilationEngine(object):
         self.checkSymbol(";")
 
 
-    def compile_return(self):
+    def compile_return(self, isVoid=False):
         """
         RUTHI
 
@@ -930,7 +928,8 @@ class CompilationEngine(object):
             self.checkSymbol(";")
 
         # write return to vm
-
+        if isVoid:
+            self.vm.writePush(grammar.CONST, 0)
         self.vm.writeReturn()
 
 

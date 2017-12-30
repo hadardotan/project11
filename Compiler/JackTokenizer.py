@@ -73,7 +73,6 @@ class JackTokenizer(object):
         else:
             self.current_value, self.current_token_type = NO_TOKEN, NO_PHRASE
 
-        print(self.current_value, self.current_token_type)
 
 
 
