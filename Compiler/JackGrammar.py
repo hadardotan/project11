@@ -8,7 +8,7 @@ var = 4
 
 
 keyword_2_kind = {'static': static, 'field' : field, 'arg' : arg, 'var' : var}
-
+kind_2_write = {static: 'static', field: 'this', arg: 'arg', var: 'local'}
 
 
 
@@ -68,7 +68,9 @@ K_IDENTIFIER = "identifier"
 K_ARG = "argument" ## not a keyword!!!!! - kind
 POINTER = 'pointer'
 CONST = 'constant'
-NEG = 'neg'
+NOT = 'not'
+TEMP = 'temp'
+LOCAL = 'local'
 
 
 #Jack types
@@ -95,7 +97,7 @@ unaryOp = ["-", '~']
 operators = ['+', '-', '*', '/', '&', '|', '<', '>', '=']
 
 # Arithmetic operations
-arithmetic_op = {'+': 'add', '-': 'sub', '*': 'Math.multiply', '/': 'Math.divide', '&': 'and', '|': 'or',
+arithmetic_dict = {'+': 'add', '-': 'sub', '*': 'Math.multiply', '/': 'Math.divide', '&': 'and', '|': 'or',
                  '<': 'lt', '>': 'gt', '=': 'eq'}
 
 # tokens type
