@@ -648,6 +648,9 @@ class CompilationEngine(object):
 
         # get varName from SymbolTable
         position = self.last_pos()
+        print("***************************")
+        print(position)
+        print(self.symbol_tables[position].indexOf(varName))
         while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
             position -= 1
         varName_index = self.symbol_tables[position].indexOf(varName)
@@ -741,14 +744,16 @@ class CompilationEngine(object):
             self.tokenizer.advance()
             self.compile_term()
             # op
-            self.vm.output_file.write(grammar.NOT + NEW_LINE)
+            self.vm.output_file.write(grammar.NEG + NEW_LINE)
 
         # varName ([ expression ])?
         elif type == grammar.IDENTIFIER:
             if check:
                 return True
+
+            print(self.tokenizer.current_value)
             # push varName
-            self.vm.writePush(grammar.LOCAL, "1")
+            self.vm.writePush(grammar.LOCAL, "1") # TODO : FIGURE OUT WHY 1 here
 
             if self.tokenizer.get_next()[0] == "[":
                 self.compile_identifier()
@@ -837,7 +842,9 @@ class CompilationEngine(object):
         """
 
         # expression?
+        args_counter = 0
         if self.compile_expression(False, False, True) is not False:
+            args_counter +=1
             # (',' expression)*
             self.compile_expression(True, True)
             self.tokenizer.advance()
@@ -846,7 +853,10 @@ class CompilationEngine(object):
                 # expression
                 self.tokenizer.advance()
                 self.compile_expression(True, True)
+                args_counter +=1
                 self.tokenizer.advance()
+
+        return args_counter
 
 
     def last_pos(self):
@@ -912,11 +922,11 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
                 # expression list
                 self.tokenizer.advance()
-                self.compile_expression_list() # writes to vm also
+                args_counter = self.compile_expression_list() # writes to vm also
                 self.checkSymbol(")")
 
                 # write to vm : call subroutine name
-                self.vm.write_subroutine_call(subroutine_name)
+                self.vm.write_subroutine_call(subroutine_name+" "+str(args_counter))
 
             # check ((className | varName).subroutineName (expressionList))
             elif self.tokenizer.get_next()[0] == ".":
@@ -940,14 +950,21 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
                 self.checkSymbol("(")
                 self.tokenizer.advance()
-                self.compile_expression_list()
+                args_counter = self.compile_expression_list()
                 # )
                 self.checkSymbol(")")
                 # write to vm : call type.subroutine name
-                self.vm.write_subroutine_call(type+'.'+subroutine_name)
+                self.vm.write_subroutine_call(type+'.'+subroutine_name+" "+str(args_counter))
 
                 if do:
                     self.vm.writePop(grammar.TEMP, 0)
+
+
+    # def get_segment(self):
+    #     """
+    #     return segment for
+    #     :return:
+    #     """
 
 
 
