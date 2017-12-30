@@ -69,6 +69,7 @@ K_ARG = "argument" ## not a keyword!!!!! - kind
 POINTER = 'pointer'
 CONST = 'constant'
 NOT = 'not'
+NEG = 'neg'
 TEMP = 'temp'
 LOCAL = 'local'
 

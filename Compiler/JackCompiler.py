@@ -12,14 +12,21 @@ def analyze(files_to_process):
     :param files_to_process: paths of files to process
     :return:
     """
+    dir_classes = []
+    for input_file_name in files_to_process:
+        file_name = os.path.splitext(input_file_name)[0]
+        # TODO : CHECK WITH LINUX SLASH !!!!!
+        last_slash = file_name.rfind('\\')
+        file_class_name = file_name[last_slash+1:]
+        dir_classes += [file_class_name]
+
     for input_file_name in files_to_process:
         file_name = os.path.splitext(input_file_name)[0]
         output_file_name = file_name + ".vm"
-
         input_file = open(input_file_name,'r')
         output_file = open(output_file_name,'w')
 
-        compiler = CompilationEngine(input_file, output_file)
+        compiler = CompilationEngine(input_file, output_file, dir_classes)
 
 
 def main(path):
@@ -48,4 +55,4 @@ if __name__ == "__main__":
 
 
 
-main("C:\nand\nand2tetris\projects\11\ConvertToBin")
+main("C:\nand\nand2tetris\projects\11\Av1")
