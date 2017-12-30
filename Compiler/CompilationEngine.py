@@ -316,8 +316,8 @@ class CompilationEngine(object):
         self.symbol_tables.append(symbol.SymbolTable())
 
         if self.current_subroutine_type == grammar.K_METHOD:
-            self.symbol_table.define('this', self.class_name, grammar.K_ARG) # TODO
-            self.symbol_tables[self.last_pos()].define('this', self.class_name, grammar.K_ARG)
+            self.symbol_table.define('this', self.class_name, grammar.arg) # TODO
+            self.symbol_tables[self.last_pos()].define('this', self.class_name, grammar.arg)
 
         # (
         self.tokenizer.advance()
@@ -647,8 +647,9 @@ class CompilationEngine(object):
 
         # get varName from SymbolTable
         position = self.last_pos()
+        print(varName)
         print(self.symbol_tables[position].indexOf(varName))
-        while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
+        while self.symbol_tables[position].indexOf(varName) in [grammar.NO_INDEX, None]: # is none
             position -= 1
         varName_index = self.symbol_tables[position].indexOf(varName)
         varName_seg = self.get_segment_by_kind(self.symbol_tables[position].kindOf(varName))
@@ -863,7 +864,6 @@ class CompilationEngine(object):
         Compiles a (possibly empty) comma separated list of expressions.
         :return:
         """
-
         # expression?
         args_counter = 0
         if self.compile_expression(False, False, True) is not False:
@@ -950,7 +950,6 @@ class CompilationEngine(object):
                 # (
                 self.tokenizer.advance()
                 # expression list
-                self.tokenizer.advance()
                 args_counter = self.compile_expression_list() # writes to vm also
                 self.checkSymbol(")")
 
@@ -983,7 +982,7 @@ class CompilationEngine(object):
                 # )
                 self.checkSymbol(")")
                 # write to vm : call type.subroutine name
-                self.vm.write_subroutine_call(type+'.'+subroutine_name+" "+str(args_counter))
+                self.vm.write_subroutine_call(type.__str__()+'.'+subroutine_name+" "+str(args_counter))
 
                 if do:
                     self.vm.writePop(grammar.TEMP, 0)
