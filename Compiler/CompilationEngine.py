@@ -82,7 +82,7 @@ class CompilationEngine(object):
         # subroutineDec*
         if self.tokenizer.current_value in [grammar.K_CONSTRUCTOR,
                                             grammar.K_FUNCTION, grammar.K_METHOD]:
-            while(self.compile_subroutine(False) is not False):
+            while(self.compile_subroutine(False)):
                 self.tokenizer.advance()
 
         # }
@@ -329,10 +329,6 @@ class CompilationEngine(object):
         # TODO delete symbolTable
         self.symbol_tables.pop()
 
-        if return_type == grammar.K_VOID:
-            self.vm.writePush(grammar.CONST, 0)
-            self.vm.writeReturn()
-
 
     def compile_subroutineBody(self):
         """
@@ -495,9 +491,10 @@ class CompilationEngine(object):
                 if self.tokenizer.current_token_type == grammar.IDENTIFIER:
                     name = self.tokenizer.current_value
                     #add to symbol table
-                    self.symbol_table.define(name, type, grammar.arg) # TODO
-                    self.symbol_tables[self.last_pos()].define(name, type, grammar.arg)
+                    self.symbol_table.define(name, type, grammar.K_ARG) # TODO
+                    self.symbol_tables[self.last_pos()].define(name, type, grammar.K_ARG)
                     self.tokenizer.advance()
+
                     if self.tokenizer.current_value == ',':
                         self.tokenizer.advance()
                     elif self.tokenizer.current_value == ')':
@@ -541,8 +538,8 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.compile_expression(True, True)
 
-        self.vm.WriteArithmetic(grammar.NOT)
-        self.vm.WriteIf("IF_" + self.if_counter.__str__() + "_1")
+        self.vm.WriteArithmetic(grammar.NEG)
+        self.vm.WriteIf("L_" + self.if_counter.__str__() + "_1")
 
         # )
         self.tokenizer.advance()
@@ -556,8 +553,8 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.compile_statements()
 
-        self.vm.WriteGoto("IF_" + self.if_counter.__str__() + "_2")
-        self.vm.WriteLabel("IF_" + self.if_counter.__str__() + "_1")
+        self.vm.WriteGoto("L_" + self.if_counter.__str__() + "_2")
+        self.vm.WriteLabel("L_" + self.if_counter.__str__() + "_1")
 
         # }
         self.checkSymbol("}")
@@ -581,7 +578,7 @@ class CompilationEngine(object):
             # }
             self.checkSymbol("}")
 
-            self.vm.WriteLabel("IF_" + self.if_counter.__str__() + "_2")
+            self.vm.WriteLabel("L_" + self.if_counter.__str__() + "_2")
 
     def compile_while(self):
         """
@@ -598,10 +595,10 @@ class CompilationEngine(object):
         # expression
         self.tokenizer.advance()
 
-        self.vm.WriteLabel("WHILE_" + self.while_counter.__str__() + "_1")
+        self.vm.WriteLabel("L_" + self.while_counter.__str__() + "_1")
         self.compile_expression()
-        self.vm.WriteArithmetic(grammar.NOT)
-        self.vm.WriteIf("WHILE_" + self.while_counter.__str__() + "_2")
+        self.vm.WriteArithmetic(grammar.NEG)
+        self.vm.WriteIf("L_" + self.while_counter.__str__() + "_2")
 
         # )
         self.tokenizer.advance()
@@ -615,8 +612,8 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.compile_statements()
 
-        self.vm.WriteGoto("WHILE_" + self.while_counter.__str__() + "_1")
-        self.vm.WriteLabel("WHILE_" + self.while_counter.__str__() + "_2")
+        self.vm.WriteGoto("L_" + self.while_counter.__str__() + "_1")
+        self.vm.WriteLabel("L_" + self.while_counter.__str__() + "_2")
 
         # }
         self.checkSymbol("}")
@@ -667,12 +664,11 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.checkSymbol(";")
 
-        # pop varName
-        kind = self.symbol_tables[position].kindOf(varName)
-        seg = grammar.kind_2_write[kind]
-        self.vm.writePop(seg, varName_index)
+        # push varName
+        segment = self.symbol_tables[position].kindOf(varName)
+        self.vm.writePop(segment, varName_index)
 
-    def compile_term(self, tags=True, check=False):
+    def compile_term(self,check=False):
         """
         RUTHI
 
@@ -689,6 +685,7 @@ class CompilationEngine(object):
 
         # Integer constant, String constant, keyword constant
         type = self.tokenizer.token_type()
+
 
         # integer constant
         if (type == grammar.INT_CONST):
@@ -728,14 +725,14 @@ class CompilationEngine(object):
             self.tokenizer.advance()
             self.compile_term()
             # op
-            self.vm.output_file.write(grammar.NOT + NEW_LINE)
+            self.vm.output_file.write(op)
 
         # varName ([ expression ])?
         elif type == grammar.IDENTIFIER:
             if check:
                 return True
             # push varName
-            self.vm.writePush(grammar.LOCAL, "1")
+            self.vm.writePush(self.tokenizer.current_value, "")
 
             if self.tokenizer.get_next()[0] == "[":
                 self.compile_identifier()
@@ -779,7 +776,7 @@ class CompilationEngine(object):
             self.vm.writePush(grammar.CONST, 0)
 
             if self.tokenizer.current_value == grammar.keyword_constant[0]:
-                self.vm.WriteArithmetic(grammar.NOT)
+                self.vm.WriteArithmetic(grammar.NEG)
 
     def compile_expression(self, tags=True, term_tag=False, expression_lst=False):
         """
@@ -788,10 +785,11 @@ class CompilationEngine(object):
         Compiles an expression.
         :return:
         """
+        sign = ""
         expression_counter = 0
 
         # term
-        if self.compile_term(False, True) is False:
+        if self.compile_term(True) is False:
             return False
         else:
             if expression_lst:
@@ -802,20 +800,23 @@ class CompilationEngine(object):
         # TODO : still working on that part :)
         op = []
         while self.tokenizer.get_next()[0] in grammar.operators:
+
             self.tokenizer.advance()
             op += [self.tokenizer.current_value]    # TODO why array?
             self.checkSymbol(self.tokenizer.current_value)
             self.tokenizer.advance()
-            print("^^^^^^^^^^^^66")
-            print(self.tokenizer.current_value)
+            self.tokenizer.current_value = sign+self.tokenizer.current_value
             # push args for arithmetic action
             self.compile_term()
 
+        while len(op) > 0:
             # self.write_arithmetic_to_vm()
             if op[len(op) - 1] == "*" or op[len(op) - 1] == "/":
-                self.vm.writeCall(grammar.arithmetic_dict[op[len(op) - 1]], 2)
+                self.vm.writeCall(grammar.arithmetic_op[op[len(op) - 1]], 2)
             else:
-                self.vm.WriteArithmetic(grammar.arithmetic_dict[op[len(op) - 1]])
+                self.vm.WriteArithmetic(grammar.arithmetic_op[op[len(op) - 1]])
+            # remove op
+            op.pop(0)
 
         return expression_counter
 
@@ -856,7 +857,7 @@ class CompilationEngine(object):
 
         # subroutineCall
         self.tokenizer.advance()
-        self.compile_subroutineCall(True)
+        self.compile_subroutineCall()
 
         # ;
         self.tokenizer.advance()
@@ -882,15 +883,20 @@ class CompilationEngine(object):
             self.tokenizer.advance()
             self.checkSymbol(";")
 
+        # TODO don't forget abt return 0
 
 
-    def compile_subroutineCall(self, do=False):
+
+    def compile_subroutineCall(self):
         """
         HADAR
 
         compiles subroutine call and writes vm code
+
+
         :return:
         """
+
         if self.tokenizer.token_type() == grammar.IDENTIFIER:
 
             # check (subroutineName ( expressionList ))
@@ -909,6 +915,7 @@ class CompilationEngine(object):
 
             # check ((className | varName).subroutineName (expressionList))
             elif self.tokenizer.get_next()[0] == ".":
+
                 # check if type
                 if self.tokenizer.current_value in self.type_list:
                     #save type
@@ -934,9 +941,6 @@ class CompilationEngine(object):
                 self.checkSymbol(")")
                 # write to vm : call type.subroutine name
                 self.vm.write_subroutine_call(type+'.'+subroutine_name)
-
-                if do:
-                    self.vm.writePop(grammar.TEMP, 0)
 
 
 
