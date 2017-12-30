@@ -23,7 +23,7 @@ NEW_LINE = "\n"
 
 
 class CompilationEngine(object):
-    def __init__(self, input_file, output_file):
+    def __init__(self, input_file, output_file, dir_classes):
         """
         Creates a new compilation engine with the
         given input and output. The next routine
@@ -38,7 +38,7 @@ class CompilationEngine(object):
         self.class_name = "" # current class name
         self.current_subroutine_type = 0
         self.current_subroutine_name = ""
-        self.type_list = grammar.jack_types + grammar.jack_libaries
+        self.type_list = grammar.jack_types + grammar.jack_libaries + dir_classes
         self.label_counter = 0
         self.if_counter = 0
         self.while_counter = 0
@@ -76,12 +76,17 @@ class CompilationEngine(object):
         # classVarDec*
         self.tokenizer.advance()
         if self.tokenizer.current_value in [grammar.K_STATIC, grammar.K_FIELD]:
-            while(self.compile_class_var_dec(False)):
+            more_dec = True
+            while(more_dec):
+                more_dec = self.compile_class_var_dec(False)
                 self.tokenizer.advance()
+
+
 
         # subroutineDec*
         if self.tokenizer.current_value in [grammar.K_CONSTRUCTOR,
                                             grammar.K_FUNCTION, grammar.K_METHOD]:
+
             while(self.compile_subroutine(False) is not False):
                 self.tokenizer.advance()
 
@@ -113,6 +118,13 @@ class CompilationEngine(object):
 
         self.compile_declaration(kind)
 
+        # check if more vars
+        if self.tokenizer.get_next()[0] in [grammar.K_STATIC, grammar.K_FIELD]:
+            return True
+        else:
+            return False
+
+
 
     def compile_subroutine_var_dec(self, raise_error=True):
         """
@@ -132,6 +144,7 @@ class CompilationEngine(object):
                 return False
 
         self.compile_declaration(kind)
+
 
     def compile_declaration(self, kind):
         """
@@ -806,8 +819,6 @@ class CompilationEngine(object):
             op += [self.tokenizer.current_value]    # TODO why array?
             self.checkSymbol(self.tokenizer.current_value)
             self.tokenizer.advance()
-            print("^^^^^^^^^^^^66")
-            print(self.tokenizer.current_value)
             # push args for arithmetic action
             self.compile_term()
 
