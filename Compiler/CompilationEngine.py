@@ -750,10 +750,14 @@ class CompilationEngine(object):
         elif type == grammar.IDENTIFIER:
             if check:
                 return True
-
-            print(self.tokenizer.current_value)
             # push varName
-            self.vm.writePush(grammar.LOCAL, "1") # TODO : FIGURE OUT WHY 1 here
+            # get varName index in symbolTable
+            position = self.last_pos()
+            varName = self.tokenizer.current_value
+            while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
+                position -= 1
+            varName_index = self.symbol_tables[position].indexOf(varName)
+            self.vm.writePush(grammar.LOCAL, varName_index)
 
             if self.tokenizer.get_next()[0] == "[":
                 self.compile_identifier()
