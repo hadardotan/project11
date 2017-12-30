@@ -339,10 +339,11 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.compile_subroutineBody()
 
-        # TODO delete symbolTable
+        # delete symbol table
         self.symbol_tables.pop()
 
         if return_type == grammar.K_VOID:
+
             self.vm.writePush(grammar.CONST, 0)
             self.vm.writeReturn()
 
@@ -431,7 +432,7 @@ class CompilationEngine(object):
         more_statements = True
         # (statement)*
         while (more_statements):
-            # TODO :ask ruthi about there lines
+            # TODO : ASK ABOUT THESE LINES
             if self.tokenizer.current_value == "/":
                 self.tokenizer.advance()
                 self.output.write(self.tokenizer.get_next()[0])
@@ -648,12 +649,11 @@ class CompilationEngine(object):
 
         # get varName from SymbolTable
         position = self.last_pos()
-        print("***************************")
-        print(position)
         print(self.symbol_tables[position].indexOf(varName))
         while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
             position -= 1
         varName_index = self.symbol_tables[position].indexOf(varName)
+
 
         # [
         advance_token = False
@@ -661,6 +661,9 @@ class CompilationEngine(object):
         check_expression = False
         if self.checkSymbol("[", False):
             check_expression = True
+            # push var_seg var_index -> if a[3] pushes a_seg a_index
+
+
         if check_expression:
             # expression
             self.tokenizer.advance()
@@ -743,8 +746,9 @@ class CompilationEngine(object):
             self.checkSymbol(self.tokenizer.current_value)
             self.tokenizer.advance()
             self.compile_term()
-            # op
-            self.vm.output_file.write(grammar.NEG + NEW_LINE)
+            # op ??????????
+            if op == '-':
+                self.vm.output_file.write(grammar.NEG + NEW_LINE)
 
         # varName ([ expression ])?
         elif type == grammar.IDENTIFIER:
@@ -757,7 +761,14 @@ class CompilationEngine(object):
             while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
                 position -= 1
             varName_index = self.symbol_tables[position].indexOf(varName)
-            self.vm.writePush(grammar.LOCAL, varName_index)
+            varName_kind = self.symbol_tables[position].kindOf(varName)
+
+            ######## HADAR ADD
+            segment = self.get_segment_by_kind(varName_kind)
+
+            if varName_index != None:
+                self.vm.writePush(segment, varName_index)
+
 
             if self.tokenizer.get_next()[0] == "[":
                 self.compile_identifier()
@@ -902,10 +913,15 @@ class CompilationEngine(object):
             self.compile_expression()
             self.tokenizer.advance()
             self.checkSymbol(";")
+
         else:
             # ;
             self.tokenizer.advance()
             self.checkSymbol(";")
+
+        # write return to vm
+
+        self.vm.writeReturn()
 
 
 
@@ -964,11 +980,23 @@ class CompilationEngine(object):
                     self.vm.writePop(grammar.TEMP, 0)
 
 
-    # def get_segment(self):
-    #     """
-    #     return segment for
-    #     :return:
-    #     """
+    def get_segment_by_kind(self, kind):
+        """
+        return segment for
+        :return:
+        """
+        segment = ""
+        if kind == grammar.var:
+            segment = grammar.LOCAL
+        elif kind == grammar.arg:
+            segment = grammar.K_ARG
+        elif kind == grammar.field:
+            segment = grammar.K_FIELD
+        elif kind == grammar.static:
+            segment = grammar.K_STATIC
+        else:
+            segment = ""
+        return segment
 
 
 

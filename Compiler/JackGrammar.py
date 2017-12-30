@@ -8,7 +8,7 @@ var = 4
 
 
 keyword_2_kind = {'static': static, 'field' : field, 'arg' : arg, 'var' : var}
-kind_2_write = {static: 'static', field: 'this', arg: 'arg', var: 'local'}
+kind_2_write = {static: 'static', field: 'this', arg: 'argument', var: 'local'}
 
 
 
