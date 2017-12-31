@@ -697,7 +697,6 @@ class CompilationEngine(object):
         # [
         self.checkSymbol('[')
         self.tokenizer.advance()
-        print(var_seg, var_index)
         self.vm.writePush(var_seg, str(var_index)) # push array pointer to stack
         self.compile_expression(True, True)
         self.tokenizer.advance()
@@ -718,6 +717,14 @@ class CompilationEngine(object):
         self.vm.writePop(grammar.THAT, '0') # pop that 0
 
 
+    def compile_array_for_expression(self, var_seg, var_index):
+        """
+
+        :return:
+        """
+        self.compile_array_dec(var_seg, var_index) # compiles array dec
+        self.vm.writePop(grammar.POINTER, '1') # pop pointer 1
+        self.vm.writePush(grammar.THAT, '0') # push that 0
 
 
     def compile_term(self, tags=True, check=False):
@@ -796,14 +803,14 @@ class CompilationEngine(object):
             varName_segment = self.get_varName_segment(varName, position)
 
             print(varName_segment + " idx: "+str(varName_index))
-            if varName_index != None:
+            if varName_index != None and self.tokenizer.get_next()[0] != '[':
                 # push varName
                 self.vm.writePush(varName_segment, varName_index)
 
             # check if array in expression
-            if self.tokenizer.get_next()[0] == '[':
+            elif varName_index != None and self.tokenizer.get_next()[0] == '[':
                 self.tokenizer.advance()
-                self.compile_array_dec(varName_segment, varName_index)
+                self.compile_array_for_expression(varName_segment, varName_index)
 
             elif (self.tokenizer.get_next()[0] == "(") or (self.tokenizer.get_next()[0] == "."):
                 # subroutineCall
