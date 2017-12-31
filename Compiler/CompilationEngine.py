@@ -788,12 +788,14 @@ class CompilationEngine(object):
             # information about var
             varName = self.tokenizer.current_value
             position = self.last_pos()
-            while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
+            while self.symbol_tables[position].indexOf(varName) in [grammar.NO_INDEX, None]:
                 position -= 1
+                if position == grammar.NO_INDEX:
+                    break
             varName_index = self.get_varName_index(varName, position)
             varName_segment = self.get_varName_segment(varName, position)
 
-
+            print(varName_segment + " idx: "+str(varName_index))
             if varName_index != None:
                 # push varName
                 self.vm.writePush(varName_segment, varName_index)
