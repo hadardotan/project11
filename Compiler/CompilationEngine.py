@@ -94,7 +94,7 @@ class CompilationEngine(object):
         # }
         self.checkSymbol("}")
 
-        # TODO delete SymbolTable
+        # delete SymbolTable
         self.symbol_tables.pop()
 
 
@@ -410,7 +410,10 @@ class CompilationEngine(object):
             self.vm.writePop(grammar.POINTER, 0) # pop pointer 0
         elif self.current_subroutine_type == grammar.K_CONSTRUCTOR:
             # push size of object
-            self.vm.writePush(grammar.CONST, self.symbol_tables[self.last_pos()].varCount(grammar.field))
+            varCounter = 0
+            for i in range(self.last_pos()):
+                varCounter += self.symbol_tables[i].varCount(grammar.field)
+            self.vm.writePush(grammar.CONST, varCounter)
             # call Memory.alloc 1
             self.vm.writeCall('Memory.alloc', 1)
             # pop pointer 0
@@ -645,7 +648,7 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         varName = self.compile_identifier()
         position = self.last_pos()
-        while self.symbol_tables[position].indexOf(varName) == grammar.NO_INDEX:
+        while self.symbol_tables[position].indexOf(varName) in [grammar.NO_INDEX, None]:
             position -= 1
         # get varName from SymbolTable
         print(varName)
@@ -679,8 +682,10 @@ class CompilationEngine(object):
         if is_list:
             self.write_push_pop_for_list()
         else: # pop value into varName
-            kind = self.symbol_tables[position].kindOf(varName)
-            seg = grammar.kind_2_write[kind]
+
+            while self.symbol_tables[position].kindOf(varName) is None:
+                position -= 1
+            seg = grammar.kind_2_write[self.symbol_tables[position].kindOf(varName)]
             self.vm.writePop(seg, varName_index)
 
 
