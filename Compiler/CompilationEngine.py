@@ -899,17 +899,25 @@ class CompilationEngine(object):
         :return:
         """
         # expression?
+
+
         args_counter = 0
         if self.compile_expression(False, False, True) is not False:
             args_counter +=1
             # (',' expression)*
-            self.compile_expression(True, True)
+            if self.tokenizer.get_next()[0] == '.':
+                self.compile_subroutineCall()
+            else:
+                self.compile_expression(True, True)
             self.tokenizer.advance()
             while self.tokenizer.current_value == ',':
                 self.checkSymbol(",")
                 # expression
                 self.tokenizer.advance()
-                self.compile_expression(True, True)
+                if self.tokenizer.get_next()[0] == '.':
+                    self.compile_subroutineCall()
+                else:
+                    self.compile_expression(True, True)
                 args_counter +=1
                 self.tokenizer.advance()
 
@@ -1014,6 +1022,8 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
                 args_counter = self.compile_expression_list()
                 # )
+                print('####################')
+                print(self.tokenizer.current_value)
                 self.checkSymbol(")")
                 # write to vm : call type.subroutine name
                 self.vm.write_subroutine_call(type.__str__()+'.'+subroutine_name+" "+str(args_counter))
@@ -1033,7 +1043,7 @@ class CompilationEngine(object):
         elif kind == grammar.arg:
             segment = grammar.K_ARG
         elif kind == grammar.field:
-            segment = grammar.K_FIELD
+            segment = grammar.K_THIS
         elif kind == grammar.static:
             segment = grammar.K_STATIC
         else:
