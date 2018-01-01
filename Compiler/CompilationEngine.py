@@ -454,8 +454,10 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
 
             elif self.tokenizer.current_value == "return":
-                self.compile_return(self.return_type)
-                self.return_type = False
+                isVoid = False
+                if self.return_type == grammar.K_VOID:
+                    isVoid = True
+                self.compile_return(isVoid)
                 self.tokenizer.advance()
             else:
                 more_statements = False
@@ -972,7 +974,7 @@ class CompilationEngine(object):
         self.checkSymbol(";")
 
 
-    def compile_return(self, isVoid=False):
+    def compile_return(self,isVoid=False):
         """
         RUTHI
 
