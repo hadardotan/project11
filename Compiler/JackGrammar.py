@@ -115,6 +115,7 @@ RE_COMMENT1 = r'//.*[\r\n]+'
 RE_COMMENT2 = r'/\*[\s\S]*?\*/'
 RE_COMMENT3 = r'/\**[\s\S]*?\*/'
 RE_STRING = r'^"[\w\W]*"?'
+RE_CLASS_NAME = r'[A-Z][a-zA-Z]'
 
 RE_STRING_COMPILED = re.compile(RE_STRING)
 RE_INT_COMPILED = re.compile(RE_INT)

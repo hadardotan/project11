@@ -770,6 +770,8 @@ class CompilationEngine(object):
 
         # subroutine call
         elif self.tokenizer.get_next()[0] == '.':
+            if check:
+                return True
             self.compile_subroutineCall()
 
         # string constant
