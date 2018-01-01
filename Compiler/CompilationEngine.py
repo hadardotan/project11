@@ -560,7 +560,12 @@ class CompilationEngine(object):
         self.vm.WriteIf("IF_" + self.if_counter.__str__() + "_1")
 
         # )
+        print("&&&&&&&&&&&&&&&&&&&&&&&")
+        print(self.tokenizer.current_value)
         self.tokenizer.advance()
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print(self.tokenizer.current_value)
+        print(self.tokenizer.get_next()[0])
         self.checkSymbol(")")
 
         # {
@@ -673,7 +678,10 @@ class CompilationEngine(object):
 
         # compile expression
         self.tokenizer.advance()
-        self.compile_expression(True, True)
+        if self.tokenizer.get_next()[0] == '.':
+            self.compile_subroutineCall()
+        else:
+            self.compile_expression(True, True)
 
         # ;
         self.tokenizer.advance()
@@ -751,6 +759,8 @@ class CompilationEngine(object):
                 return True
             self.vm.writePush(grammar.CONST, self.tokenizer.current_value)
 
+
+
         # keyword
         elif (type == grammar.KEYWORD and self.tokenizer.keyword() in grammar.keyword_constant):
             if check:
@@ -758,7 +768,11 @@ class CompilationEngine(object):
 
             self.compile_keyword()
 
-            # string constant
+        # subroutine call
+        elif self.tokenizer.get_next()[0] == '.':
+            self.compile_subroutineCall()
+
+        # string constant
         elif type == grammar.STRING_CONS:
             if check:
                 return True
@@ -782,7 +796,7 @@ class CompilationEngine(object):
             self.checkSymbol(self.tokenizer.current_value)
             self.tokenizer.advance()
             self.compile_term()
-            # op ??????????
+            # op -
             if op == '-':
                 self.vm.output_file.write(grammar.NEG + NEW_LINE)
 
@@ -802,7 +816,7 @@ class CompilationEngine(object):
             varName_index = self.get_varName_index(varName, position)
             varName_segment = self.get_varName_segment(varName, position)
 
-            print(varName_segment + " idx: "+str(varName_index))
+            # print(varName_segment + " idx: "+str(varName_index))
             if varName_index != None and self.tokenizer.get_next()[0] != '[':
                 # push varName
                 self.vm.writePush(varName_segment, varName_index)
@@ -876,10 +890,17 @@ class CompilationEngine(object):
             self.compile_term()
 
         # (op term)*
+        self.compile_op_term()
+
+
+        return expression_counter
+
+
+    def compile_op_term(self):
         op = []
         while self.tokenizer.get_next()[0] in grammar.operators:
             self.tokenizer.advance()
-            op += [self.tokenizer.current_value]    # TODO why array?
+            op += [self.tokenizer.current_value]  # TODO why array?
             self.checkSymbol(self.tokenizer.current_value)
             self.tokenizer.advance()
             # push args for arithmetic action
@@ -889,9 +910,9 @@ class CompilationEngine(object):
             if op[len(op) - 1] == "*" or op[len(op) - 1] == "/":
                 self.vm.writeCall(grammar.arithmetic_dict[op[len(op) - 1]], 2)
             else:
-                self.vm.WriteArithmetic(grammar.arithmetic_dict[op[len(op) - 1]])
+                self.vm.WriteArithmetic(
+                    grammar.arithmetic_dict[op[len(op) - 1]])
 
-        return expression_counter
 
     def compile_expression_list(self):
         """
@@ -1022,8 +1043,6 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
                 args_counter = self.compile_expression_list()
                 # )
-                print('####################')
-                print(self.tokenizer.current_value)
                 self.checkSymbol(")")
                 # write to vm : call type.subroutine name
                 self.vm.write_subroutine_call(type.__str__()+'.'+subroutine_name+" "+str(args_counter))
