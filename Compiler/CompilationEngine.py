@@ -1033,6 +1033,12 @@ class CompilationEngine(object):
                         position -= 1
                     type = self.symbol_tables[position].typeOf(self.tokenizer.current_value)
 
+                    varName_index = self.get_varName_index(self.tokenizer.current_value, position)
+                    varName_seg = self.get_varName_segment(self.tokenizer.current_value, position)
+
+                    # method call like xxx.m(y) is actually compiled as if it were written as m(xxx,y): “push xxx, push y, call m”
+                    self.vm.writePush(varName_seg, varName_index)
+
                 # .
                 self.tokenizer.advance()
                 # subroutineName
