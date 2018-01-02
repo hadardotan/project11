@@ -156,6 +156,8 @@ class CompilationEngine(object):
         #type
         self.tokenizer.advance()
         type = self.tokenizer.current_value
+        if type not in self.type_list:
+            self.type_list += [type]
 
         # varName
         self.tokenizer.advance()
@@ -1010,23 +1012,32 @@ class CompilationEngine(object):
 
             # check (subroutineName ( expressionList ))
             if self.tokenizer.get_next()[0] == "(":
+                self.vm.writePush(grammar.POINTER, '0') # (ball test)
+
                 subroutine_name = self.tokenizer.current_value
                 self.tokenizer.advance()
                 # (
                 self.tokenizer.advance()
                 # expression list
-                args_counter = self.compile_expression_list() # writes to vm also
+                args_counter = self.compile_expression_list() + 1 # writes to vm also
                 self.checkSymbol(")")
 
                 # write to vm : call subroutine name
-                self.vm.write_subroutine_call(subroutine_name+" "+str(args_counter))
+                self.vm.write_subroutine_call(self.class_name+"."+subroutine_name+" "+str(args_counter))
+
+                self.vm.writePop(grammar.TEMP, '0')  # (ball test)
 
             # check ((className | varName).subroutineName (expressionList))
             elif self.tokenizer.get_next()[0] == ".":
-                # type
-                type = self.tokenizer.current_value
+                # check if current in type list
+                if self.tokenizer.current_value in self.type_list:
+                    type = self.tokenizer.current_value
                 # else it is a var - get varType var type
-
+                else:
+                    position = self.last_pos()
+                    while self.symbol_tables[position].typeOf(self.tokenizer.current_value) in [grammar.NO_INDEX, None]:
+                        position -= 1
+                    type = self.symbol_tables[position].typeOf(self.tokenizer.current_value)
 
                 # .
                 self.tokenizer.advance()
@@ -1037,7 +1048,7 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
                 self.checkSymbol("(")
                 self.tokenizer.advance()
-                args_counter = self.compile_expression_list()
+                args_counter = self.compile_expression_list() # TODO : WHEN ADD 1??
                 # )
                 self.checkSymbol(")")
                 # write to vm : call type.subroutine name
