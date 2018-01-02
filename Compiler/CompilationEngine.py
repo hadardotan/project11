@@ -63,8 +63,6 @@ class CompilationEngine(object):
         #class name
         self.tokenizer.advance()
         self.class_name = self.tokenizer.current_value
-        # add class type to list of types
-        self.type_list.append(self.tokenizer.current_value)
         self.compile_identifier()
 
         # Create new symbol table
@@ -157,7 +155,7 @@ class CompilationEngine(object):
 
         #type
         self.tokenizer.advance()
-        type = self.compile_type()
+        type = self.tokenizer.current_value
 
         # varName
         self.tokenizer.advance()
@@ -195,18 +193,22 @@ class CompilationEngine(object):
             if self.tokenizer.get_next()[0] == ",":
 
                 self.tokenizer.advance() # ,
+                print("&&&&&&&&&&&&&&&&&&&&&&")
+                print(self.tokenizer.current_value)
 
-                # type (if applicable)
-                if self.tokenizer.get_next()[0] in self.type_list: #new type
 
-                    self.tokenizer.advance()
-                    type = self.compile_type(False)
-                else:
-                    type = current_type
+                self.tokenizer.advance()
+                type = self.tokenizer.current_value
+                print("#########################3")
+                print(self.tokenizer.current_value)
+
 
                 # varName
                 self.tokenizer.advance()
+                print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+                print(self.tokenizer.current_value)
                 name = self.compile_identifier()
+
 
                 # add to symbol table
                 self.symbol_table.define(name, type, kind)
@@ -217,20 +219,20 @@ class CompilationEngine(object):
 
 
 
-    def compile_type(self, raise_error=True):
-        """
-        HADAR
-
-        checks that current_value in type list
-        :return: type
-        """
-        if self.tokenizer.current_value in self.type_list:
-            return self.tokenizer.current_value
-        else:
-            if raise_error:
-                raise ValueError("No type found")
-            else:
-                return False
+    # def compile_type(self, raise_error=True):
+    #     """
+    #     HADAR
+    #
+    #     checks that current_value in type list
+    #     :return: type
+    #     """
+    #     if self.tokenizer.current_value in self.type_list:
+    #         return self.tokenizer.current_value
+    #     else:
+    #         if raise_error:
+    #             raise ValueError("No type found")
+    #         else:
+    #             return False
 
 
 
@@ -293,12 +295,13 @@ class CompilationEngine(object):
         # void or type
         self.tokenizer.advance()
         type = self.tokenizer.current_value
-        if self.current_is_void_or_type():
-            self.return_type = self.tokenizer.current_value
-        else:
-            if raise_error:
-                raise ValueError("No keyword found in subroutine")
-            return False
+        self.return_type = self.tokenizer.current_value
+        # if self.current_is_void_or_type():
+        #     self.return_type = self.tokenizer.current_value
+        # else:
+        #     if raise_error:
+        #         raise ValueError("No keyword found in subroutine")
+        #     return False
 
         # subroutine name
         self.tokenizer.advance()
@@ -473,14 +476,14 @@ class CompilationEngine(object):
         self.label_counter += 1
         return 'L'+str(self.label_counter)
 
-    def current_is_void_or_type(self):
-
-        """
-        HADAR
-
-        :return: true if void or type, false otherwise
-        """
-        return (self.tokenizer.current_value == grammar.K_VOID) or self.tokenizer.current_value in self.type_list
+    # def current_is_void_or_type(self):
+    #
+    #     """
+    #     HADAR
+    #
+    #     :return: true if void or type, false otherwise
+    #     """
+    #     return (self.tokenizer.current_value == grammar.K_VOID) or self.tokenizer.current_value in self.type_list
 
 
 
@@ -506,7 +509,7 @@ class CompilationEngine(object):
         """
         more_parameters = True
         while more_parameters:
-            if self.is_type():
+            if self.is_more_vars():
                 type = self.tokenizer.current_value
                 self.tokenizer.advance()
                 if self.tokenizer.current_token_type == grammar.IDENTIFIER:
@@ -526,11 +529,11 @@ class CompilationEngine(object):
         return True
 
 
-    def is_type(self):
+    def is_more_vars(self):
         """ Checks if the type of the current type is in the type_list
         """
 
-        return (self.tokenizer.current_value in self.type_list)
+        return self.tokenizer.current_value != ')'
 
 
     def checkSymbol(self, symbol, raise_error=True):
@@ -562,12 +565,7 @@ class CompilationEngine(object):
         self.vm.WriteIf("IF_" + self.if_counter.__str__() + "_1")
 
         # )
-        print("&&&&&&&&&&&&&&&&&&&&&&&")
-        print(self.tokenizer.current_value)
         self.tokenizer.advance()
-        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-        print(self.tokenizer.current_value)
-        print(self.tokenizer.get_next()[0])
         self.checkSymbol(")")
 
         # {
@@ -1025,16 +1023,10 @@ class CompilationEngine(object):
 
             # check ((className | varName).subroutineName (expressionList))
             elif self.tokenizer.get_next()[0] == ".":
-                # check if type
-                if self.tokenizer.current_value in self.type_list:
-                    #save type
-                    type = self.tokenizer.current_value
+                # type
+                type = self.tokenizer.current_value
                 # else it is a var - get varType var type
-                else:
-                    position = self.last_pos()
-                    while self.symbol_tables[position].indexOf(self.tokenizer.current_value) == grammar.NO_INDEX:
-                        position -= 1
-                    type = self.symbol_tables[position].typeOf(self.tokenizer.current_value)
+
 
                 # .
                 self.tokenizer.advance()
