@@ -193,22 +193,16 @@ class CompilationEngine(object):
         while (more_vars):
             # ','
             if self.tokenizer.get_next()[0] == ",":
-
                 self.tokenizer.advance() # ,
-                print("&&&&&&&&&&&&&&&&&&&&&&")
-                print(self.tokenizer.current_value)
-
-
-                self.tokenizer.advance()
-                type = self.tokenizer.current_value
-                print("#########################3")
-                print(self.tokenizer.current_value)
-
+                # type (if applicable)
+                if self.tokenizer.get_next()[0] in self.type_list:  # new type
+                    self.tokenizer.advance()
+                    type = self.tokenizer.current_value
+                else:
+                    type = current_type
 
                 # varName
                 self.tokenizer.advance()
-                print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-                print(self.tokenizer.current_value)
                 name = self.compile_identifier()
 
 
@@ -803,6 +797,8 @@ class CompilationEngine(object):
             # op -
             if op == '-':
                 self.vm.output_file.write(grammar.NEG + NEW_LINE)
+            elif op == '~':
+                self.vm.output_file.write(grammar.NOT + NEW_LINE)
 
         # varName ([ expression ])?
         elif type == grammar.IDENTIFIER:
@@ -983,16 +979,14 @@ class CompilationEngine(object):
         """
 
         # expression?
-        if self.tokenizer.get_next()[0] != ";":
+        while self.tokenizer.get_next()[0] != ";":
             self.tokenizer.advance()
             self.compile_expression()
-            self.tokenizer.advance()
-            self.checkSymbol(";")
 
-        else:
-            # ;
-            self.tokenizer.advance()
-            self.checkSymbol(";")
+        self.tokenizer.advance()
+        self.checkSymbol(";")
+
+
 
         # write return to vm
         if isVoid:
