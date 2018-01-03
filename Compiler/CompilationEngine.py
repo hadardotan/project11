@@ -632,12 +632,15 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.checkSymbol("{")
 
+        # todo : check for squaretest
+        self.vm.WriteGoto("WHILE_" + self.while_counter.__str__() + "_1")
+        self.vm.WriteLabel("WHILE_" + self.while_counter.__str__() + "_2")
+
         # statement
         self.tokenizer.advance()
         self.compile_statements()
 
-        self.vm.WriteGoto("WHILE_" + self.while_counter.__str__() + "_1")
-        self.vm.WriteLabel("WHILE_" + self.while_counter.__str__() + "_2")
+
 
         # }
         self.checkSymbol("}")
