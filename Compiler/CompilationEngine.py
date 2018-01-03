@@ -596,7 +596,10 @@ class CompilationEngine(object):
             self.tokenizer.advance()
             if self.tokenizer.current_value == "else":
                 else_param = True
+
         if (else_param):
+            self.vm.WriteGoto("IF_" + current_counter.__str__() + "_3")
+            self.vm.WriteLabel("IF_" + current_counter.__str__() + "_2")
             # {
             self.tokenizer.advance()
             self.checkSymbol("{")
@@ -608,7 +611,11 @@ class CompilationEngine(object):
             # }
             self.checkSymbol("}")
 
-        self.vm.WriteLabel("IF_" + current_counter.__str__() + "_2")
+
+        if else_param:
+            self.vm.WriteLabel("IF_" + current_counter.__str__() + "_3")
+        else:
+            self.vm.WriteLabel("IF_" + current_counter.__str__() + "_2")
 
     def compile_while(self):
         """
