@@ -558,7 +558,8 @@ class CompilationEngine(object):
         self.compile_expression(True, True)
 
         self.vm.WriteArithmetic(grammar.NOT)
-        self.vm.WriteIf("IF_" + self.if_counter.__str__() + "_1")
+        counter = self.if_counter.__str__()
+        self.vm.WriteIf("IF_" + counter + "_1")
 
         # )
         self.tokenizer.advance()
@@ -572,8 +573,8 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.compile_statements()
 
-        self.vm.WriteGoto("IF_" + self.if_counter.__str__() + "_2")
-        self.vm.WriteLabel("IF_" + self.if_counter.__str__() + "_1")
+        self.vm.WriteGoto("IF_" + counter + "_2")
+        self.vm.WriteLabel("IF_" + counter + "_1")
 
         # }
         self.checkSymbol("}")
@@ -597,7 +598,7 @@ class CompilationEngine(object):
             # }
             self.checkSymbol("}")
 
-            self.vm.WriteLabel("IF_" + self.if_counter.__str__() + "_2")
+        self.vm.WriteLabel("IF_" + counter + "_2")
 
     def compile_while(self):
         """
@@ -800,6 +801,7 @@ class CompilationEngine(object):
             elif op == '~':
                 self.vm.output_file.write(grammar.NOT + NEW_LINE)
 
+
         # varName ([ expression ])?
         elif type == grammar.IDENTIFIER:
             if check:
@@ -815,6 +817,11 @@ class CompilationEngine(object):
                     break
             varName_index = self.get_varName_index(varName, position)
             varName_segment = self.get_varName_segment(varName, position)
+
+            # check if array in expression
+            if self.tokenizer.get_next()[0] == '[':
+                self.tokenizer.advance()
+                self.compile_array_dec(varName_segment, varName_index)
 
             # print(varName_segment + " idx: "+str(varName_index))
             if varName_index != None and self.tokenizer.get_next()[0] != '[':
@@ -1031,13 +1038,14 @@ class CompilationEngine(object):
                     position = self.last_pos()
                     while self.symbol_tables[position].typeOf(self.tokenizer.current_value) in [grammar.NO_INDEX, None]:
                         position -= 1
+                        if position == grammar.NO_INDEX:
+                            break
                     type = self.symbol_tables[position].typeOf(self.tokenizer.current_value)
 
                     varName_index = self.get_varName_index(self.tokenizer.current_value, position)
                     varName_seg = self.get_varName_segment(self.tokenizer.current_value, position)
 
-                    # method call like xxx.m(y) is actually compiled as if it were written as m(xxx,y): “push xxx, push y, call m”
-                    self.vm.writePush(varName_seg, varName_index)
+
 
                 # .
                 self.tokenizer.advance()
