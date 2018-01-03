@@ -55,4 +55,4 @@ if __name__ == "__main__":
 
 
 
-main("C:\nand\nand2tetris\projects\11\Square")
+main("C:\nand\nand2tetris\projects\11\2")

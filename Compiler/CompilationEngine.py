@@ -40,8 +40,8 @@ class CompilationEngine(object):
         self.current_subroutine_name = ""
         self.type_list = grammar.jack_types + grammar.jack_libaries + dir_classes
         self.label_counter = 0
-        self.if_counter = 0
-        self.while_counter = 0
+        self.if_counter = -1
+        self.while_counter = -1
         self.tokenizer.advance()
         self.symbol_tables = []
         self.compile_class()
@@ -132,6 +132,8 @@ class CompilationEngine(object):
         :param raise_error:
         :return:
         """
+
+
         # 'var'
         if self.tokenizer.current_value == grammar.K_VAR:
             kind = grammar.keyword_2_kind[self.tokenizer.current_value]
@@ -287,6 +289,9 @@ class CompilationEngine(object):
                 raise ValueError("No keyword found in subroutine")
             else:
                 return False
+
+        # init while counter and if counter
+        self.if_counter, self.while_counter = -1, -1
 
         # void or type
         self.tokenizer.advance()
@@ -548,6 +553,7 @@ class CompilationEngine(object):
         :return:
         """
         self.if_counter += 1
+        current_counter = self.if_counter
 
         # (
         self.tokenizer.advance()
@@ -558,7 +564,7 @@ class CompilationEngine(object):
         self.compile_expression(True, True)
 
         # self.vm.WriteArithmetic(grammar.NOT)
-        self.vm.WriteIf("IF_" + self.if_counter.__str__() + "_1")
+        self.vm.WriteIf("IF_" + current_counter.__str__() + "_1")
 
         # )
         self.tokenizer.advance()
@@ -570,11 +576,11 @@ class CompilationEngine(object):
 
 
         # TODO : CHECKNG ANOTHER VERSION OF IF
-        self.vm.WriteGoto("IF_" + self.if_counter.__str__() + "_2")
-        self.vm.WriteLabel("IF_" + self.if_counter.__str__() + "_1")
+        self.vm.WriteGoto("IF_" + current_counter.__str__() + "_2")
+        self.vm.WriteLabel("IF_" + current_counter.__str__() + "_1")
 
         # saving counter for later
-        current_counter = self.if_counter
+
 
         # statements
         self.tokenizer.advance()
@@ -612,17 +618,17 @@ class CompilationEngine(object):
         :return:
         """
         self.while_counter += 1
+        current_counter = self.while_counter
 
         # (
         self.tokenizer.advance()
         self.checkSymbol("(")
         # expression
         self.tokenizer.advance()
-
-        self.vm.WriteLabel("WHILE_" + self.while_counter.__str__() + "_1")
+        self.vm.WriteLabel("WHILE_" + current_counter.__str__() + "_1")
         self.compile_expression()
         self.vm.WriteArithmetic(grammar.NOT)
-        self.vm.WriteIf("WHILE_" + self.while_counter.__str__() + "_2")
+        self.vm.WriteIf("WHILE_" + current_counter.__str__() + "_2")
 
         # )
         self.tokenizer.advance()
@@ -632,15 +638,12 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.checkSymbol("{")
 
-        # todo : check for squaretest
-        self.vm.WriteGoto("WHILE_" + self.while_counter.__str__() + "_1")
-        self.vm.WriteLabel("WHILE_" + self.while_counter.__str__() + "_2")
-
         # statement
         self.tokenizer.advance()
         self.compile_statements()
 
-
+        self.vm.WriteGoto("WHILE_" + current_counter.__str__() + "_1")
+        self.vm.WriteLabel("WHILE_" + current_counter.__str__() + "_2")
 
         # }
         self.checkSymbol("}")
@@ -1012,6 +1015,8 @@ class CompilationEngine(object):
         """
         if self.tokenizer.token_type() == grammar.IDENTIFIER:
 
+            var_add = 0
+
             # check (subroutineName ( expressionList ))
             if self.tokenizer.get_next()[0] == "(":
                 self.vm.writePush(grammar.POINTER, '0') # (ball test)
@@ -1036,6 +1041,7 @@ class CompilationEngine(object):
                     type = self.tokenizer.current_value
                 # else it is a var - get varType var type
                 else:
+                    var_add = 1
                     position = self.last_pos()
                     while self.symbol_tables[position].typeOf(self.tokenizer.current_value) in [grammar.NO_INDEX, None]:
                         position -= 1
@@ -1056,11 +1062,11 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
                 self.checkSymbol("(")
                 self.tokenizer.advance()
-                args_counter = self.compile_expression_list() # TODO : WHEN ADD 1??
+                args_counter = self.compile_expression_list()
                 # )
                 self.checkSymbol(")")
                 # write to vm : call type.subroutine name
-                self.vm.write_subroutine_call(type.__str__()+'.'+subroutine_name+" "+str(args_counter))
+                self.vm.write_subroutine_call(type.__str__()+'.'+subroutine_name+" "+str(args_counter+var_add))
 
                 if do:
                     self.vm.writePop(grammar.TEMP, 0)
