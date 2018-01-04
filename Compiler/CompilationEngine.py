@@ -783,7 +783,7 @@ class CompilationEngine(object):
         elif self.tokenizer.get_next()[0] == '.':
             if check:
                 return True
-            self.compile_subroutineCall()
+            self.compile_subroutineCall(False, True)
 
         # string constant
         elif type == grammar.STRING_CONS:
@@ -843,7 +843,7 @@ class CompilationEngine(object):
 
             elif (self.tokenizer.get_next()[0] == "(") or (self.tokenizer.get_next()[0] == "."):
                 # subroutineCall
-                self.compile_subroutineCall()
+                self.compile_subroutineCall(False, True)
 
         else:
             return False
@@ -1010,7 +1010,7 @@ class CompilationEngine(object):
 
 
 
-    def compile_subroutineCall(self, do=False):
+    def compile_subroutineCall(self, do=False, term=False):
         """
         HADAR
 
@@ -1035,8 +1035,8 @@ class CompilationEngine(object):
 
                 # write to vm : call subroutine name
                 self.vm.write_subroutine_call(self.class_name+"."+subroutine_name+" "+str(args_counter))
-
-                self.vm.writePop(grammar.TEMP, '0')  # (ball test)
+                if not term:
+                    self.vm.writePop(grammar.TEMP, '0')  # (ball test)
 
             # check ((className | varName).subroutineName (expressionList))
             elif self.tokenizer.get_next()[0] == ".":
