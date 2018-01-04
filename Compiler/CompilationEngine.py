@@ -1055,13 +1055,20 @@ class CompilationEngine(object):
                     position = self.last_pos()
                     while self.symbol_tables[position].typeOf(self.tokenizer.current_value) in [grammar.NO_INDEX, None]:
                         position -= 1
+                        if position == grammar.NO_INDEX:
+                            break
                     type = self.symbol_tables[position].typeOf(self.tokenizer.current_value)
 
-                    varName_index = self.get_varName_index(self.tokenizer.current_value, position)
-                    varName_seg = self.get_varName_segment(self.tokenizer.current_value, position)
+                    if type is not None:
 
-                    # pus
-                    self.vm.writePush(varName_seg, varName_index)
+                        varName_index = self.get_varName_index(self.tokenizer.current_value, position)
+                        varName_seg = self.get_varName_segment(self.tokenizer.current_value, position)
+
+                        # push
+                        self.vm.writePush(varName_seg, varName_index)
+                        print(varName_seg, varName_index)
+                    else:
+                        type = self.tokenizer.current_value
 
                 # .
                 self.tokenizer.advance()
