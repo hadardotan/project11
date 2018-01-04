@@ -408,7 +408,6 @@ class CompilationEngine(object):
         # TODO symbol table needs to be fixed ?
         self.vm.writeFunction(self.get_vm_function_name(),
                               self.symbol_tables[self.last_pos()].varCount(grammar.keyword_2_kind[grammar.K_VAR]))
-
         if self.current_subroutine_type == grammar.K_METHOD:
             self.vm.writePush(grammar.K_ARG, 0) # push argument 0
             self.vm.writePop(grammar.POINTER, 0) # pop pointer 0
@@ -670,7 +669,6 @@ class CompilationEngine(object):
         while self.symbol_tables[position].indexOf(varName) in [grammar.NO_INDEX, None]:
             position -= 1
         # get varName from SymbolTable
-        print(varName)
         varName_index = self.get_varName_index(varName, position)
         varName_seg = self.get_varName_segment(varName, position)
 
@@ -766,7 +764,6 @@ class CompilationEngine(object):
 
         # Integer constant, String constant, keyword constant
         type = self.tokenizer.token_type()
-
         # integer constant
         if (type == grammar.INT_CONST):
             if check:
@@ -1023,7 +1020,7 @@ class CompilationEngine(object):
         if self.tokenizer.token_type() == grammar.IDENTIFIER:
 
             var_add = 0
-
+            type = None
             # check (subroutineName ( expressionList ))
             if self.tokenizer.get_next()[0] == "(":
                 self.vm.writePush(grammar.POINTER, '0') # (ball test)
@@ -1046,19 +1043,27 @@ class CompilationEngine(object):
                 # check if current in type list
                 if self.tokenizer.current_value in self.type_list:
                     type = self.tokenizer.current_value
+
                 # else it is a var - get varType var type
                 else:
                     var_add = 1
                     position = self.last_pos()
                     while self.symbol_tables[position].typeOf(self.tokenizer.current_value) in [grammar.NO_INDEX, None]:
                         position -= 1
+                        if position == grammar.NO_INDEX:
+                            break
                     type = self.symbol_tables[position].typeOf(self.tokenizer.current_value)
 
-                    varName_index = self.get_varName_index(self.tokenizer.current_value, position)
-                    varName_seg = self.get_varName_segment(self.tokenizer.current_value, position)
+                    if type is not None:
 
-                    # pus
-                    self.vm.writePush(varName_seg, varName_index)
+                        varName_index = self.get_varName_index(self.tokenizer.current_value, position)
+                        varName_seg = self.get_varName_segment(self.tokenizer.current_value, position)
+
+                        # push
+                        self.vm.writePush(varName_seg, varName_index)
+                        print(varName_seg, varName_index)
+                    else:
+                        type = self.tokenizer.current_value
 
                 # .
                 self.tokenizer.advance()

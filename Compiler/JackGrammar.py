@@ -21,8 +21,9 @@ L_OUTPUT = 'Output'
 L_SCREEN = 'Screen'
 L_STRING = 'String'
 L_SYS = 'Sys'
+L_UTILS = 'Utils'
 
-jack_libaries = [L_MATH, L_KEYBOARD, L_ARRAY, L_MEMORY, L_OUTPUT, L_SCREEN, L_STRING, L_SYS]
+jack_libaries = [L_MATH, L_KEYBOARD, L_ARRAY, L_MEMORY, L_OUTPUT, L_SCREEN, L_STRING, L_SYS, L_UTILS]
 
 # The Jack language includes five types of terminal elements (tokens):
 # KEYWORD, SYMBOL, IDENTIFIER,INT_CONST,STRING_CONS
