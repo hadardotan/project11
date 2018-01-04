@@ -408,6 +408,7 @@ class CompilationEngine(object):
         # TODO symbol table needs to be fixed ?
         self.vm.writeFunction(self.get_vm_function_name(),
                               self.symbol_tables[self.last_pos()].varCount(grammar.keyword_2_kind[grammar.K_VAR]))
+
         if self.current_subroutine_type == grammar.K_METHOD:
             self.vm.writePush(grammar.K_ARG, 0) # push argument 0
             self.vm.writePop(grammar.POINTER, 0) # pop pointer 0
@@ -717,11 +718,15 @@ class CompilationEngine(object):
         # [
         self.checkSymbol('[')
         self.tokenizer.advance()
-        self.vm.writePush(var_seg, str(var_index)) # push array pointer to stack
+          # push array pointer to stack
+
+
         self.compile_expression(True, True)
         self.tokenizer.advance()
         # ]
         self.checkSymbol(']')
+
+        self.vm.writePush(var_seg, str(var_index))
         # add
         self.vm.WriteArithmetic('add')
 
@@ -743,6 +748,7 @@ class CompilationEngine(object):
         :return:
         """
         self.compile_array_dec(var_seg, var_index) # compiles array dec
+
         self.vm.writePop(grammar.POINTER, '1') # pop pointer 1
         self.vm.writePush(grammar.THAT, '0') # push that 0
 
@@ -764,6 +770,7 @@ class CompilationEngine(object):
 
         # Integer constant, String constant, keyword constant
         type = self.tokenizer.token_type()
+
         # integer constant
         if (type == grammar.INT_CONST):
             if check:
@@ -831,7 +838,6 @@ class CompilationEngine(object):
             varName_index = self.get_varName_index(varName, position)
             varName_segment = self.get_varName_segment(varName, position)
 
-            # print(varName_segment + " idx: "+str(varName_index))
             if varName_index != None and self.tokenizer.get_next()[0] != '[':
                 # push varName
                 self.vm.writePush(varName_segment, varName_index)
@@ -1020,7 +1026,7 @@ class CompilationEngine(object):
         if self.tokenizer.token_type() == grammar.IDENTIFIER:
 
             var_add = 0
-            type = None
+
             # check (subroutineName ( expressionList ))
             if self.tokenizer.get_next()[0] == "(":
                 self.vm.writePush(grammar.POINTER, '0') # (ball test)
@@ -1043,27 +1049,19 @@ class CompilationEngine(object):
                 # check if current in type list
                 if self.tokenizer.current_value in self.type_list:
                     type = self.tokenizer.current_value
-
                 # else it is a var - get varType var type
                 else:
                     var_add = 1
                     position = self.last_pos()
                     while self.symbol_tables[position].typeOf(self.tokenizer.current_value) in [grammar.NO_INDEX, None]:
                         position -= 1
-                        if position == grammar.NO_INDEX:
-                            break
                     type = self.symbol_tables[position].typeOf(self.tokenizer.current_value)
 
-                    if type is not None:
+                    varName_index = self.get_varName_index(self.tokenizer.current_value, position)
+                    varName_seg = self.get_varName_segment(self.tokenizer.current_value, position)
 
-                        varName_index = self.get_varName_index(self.tokenizer.current_value, position)
-                        varName_seg = self.get_varName_segment(self.tokenizer.current_value, position)
-
-                        # push
-                        self.vm.writePush(varName_seg, varName_index)
-                        print(varName_seg, varName_index)
-                    else:
-                        type = self.tokenizer.current_value
+                    # pus
+                    self.vm.writePush(varName_seg, varName_index)
 
                 # .
                 self.tokenizer.advance()
