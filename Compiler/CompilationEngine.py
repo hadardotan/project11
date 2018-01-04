@@ -563,7 +563,7 @@ class CompilationEngine(object):
         self.compile_expression(True, True)
 
         # self.vm.WriteArithmetic(grammar.NOT)
-        self.vm.WriteIf("IF_" + current_counter.__str__() + "_1")
+        self.vm.WriteIf("IF_TRUE" + current_counter.__str__())
 
         # )
         self.tokenizer.advance()
@@ -575,8 +575,8 @@ class CompilationEngine(object):
 
 
         # TODO : CHECKNG ANOTHER VERSION OF IF
-        self.vm.WriteGoto("IF_" + current_counter.__str__() + "_2")
-        self.vm.WriteLabel("IF_" + current_counter.__str__() + "_1")
+        self.vm.WriteGoto("IF_FALSE" + current_counter.__str__())
+        self.vm.WriteLabel("IF_TRUE" + current_counter.__str__())
 
         # saving counter for later
 
@@ -597,8 +597,8 @@ class CompilationEngine(object):
                 else_param = True
 
         if (else_param):
-            self.vm.WriteGoto("IF_" + current_counter.__str__() + "_3")
-            self.vm.WriteLabel("IF_" + current_counter.__str__() + "_2")
+            self.vm.WriteGoto("IF_END" + current_counter.__str__())
+            self.vm.WriteLabel("IF_FALSE" + current_counter.__str__())
             # {
             self.tokenizer.advance()
             self.checkSymbol("{")
@@ -612,9 +612,9 @@ class CompilationEngine(object):
 
 
         if else_param:
-            self.vm.WriteLabel("IF_" + current_counter.__str__() + "_3")
+            self.vm.WriteLabel("IF_END" + current_counter.__str__())
         else:
-            self.vm.WriteLabel("IF_" + current_counter.__str__() + "_2")
+            self.vm.WriteLabel("IF_FALSE" + current_counter.__str__())
 
     def compile_while(self):
         """
@@ -631,10 +631,10 @@ class CompilationEngine(object):
         self.checkSymbol("(")
         # expression
         self.tokenizer.advance()
-        self.vm.WriteLabel("WHILE_" + current_counter.__str__() + "_1")
+        self.vm.WriteLabel("WHILE_EXP" + current_counter.__str__())
         self.compile_expression()
         self.vm.WriteArithmetic(grammar.NOT)
-        self.vm.WriteIf("WHILE_" + current_counter.__str__() + "_2")
+        self.vm.WriteIf("WHILE_END" + current_counter.__str__())
 
         # )
         self.tokenizer.advance()
@@ -648,8 +648,8 @@ class CompilationEngine(object):
         self.tokenizer.advance()
         self.compile_statements()
 
-        self.vm.WriteGoto("WHILE_" + current_counter.__str__() + "_1")
-        self.vm.WriteLabel("WHILE_" + current_counter.__str__() + "_2")
+        self.vm.WriteGoto("WHILE_EXP" + current_counter.__str__())
+        self.vm.WriteLabel("WHILE_END" + current_counter.__str__())
 
         # }
         self.checkSymbol("}")
