@@ -947,10 +947,15 @@ class CompilationEngine(object):
         if self.compile_expression(False, False, True) is not False:
             args_counter +=1
             # (',' expression)*
-            if self.tokenizer.get_next()[0] == '.':
-                self.compile_subroutineCall()
-            else:
-                self.compile_expression(True, True)
+            # if self.tokenizer.get_next()[0] == '.':
+            #     self.compile_subroutineCall()
+            #     print(self.tokenizer.get_next()[0])
+            #     if self.tokenizer.get_next()[0] in grammar.operators:
+            #         self.compile_expression()
+            #
+            #
+            # else:
+            self.compile_expression(True, True)
             self.tokenizer.advance()
             while self.tokenizer.current_value == ',':
                 self.checkSymbol(",")
@@ -1081,6 +1086,8 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
                 args_counter = self.compile_expression_list()
                 # )
+                print(self.tokenizer.current_value)
+                print(self.tokenizer.get_next()[0])
                 self.checkSymbol(")")
                 # write to vm : call type.subroutine name
                 self.vm.write_subroutine_call(type.__str__()+'.'+subroutine_name+" "+str(args_counter+var_add))
