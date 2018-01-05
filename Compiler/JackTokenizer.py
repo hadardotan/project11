@@ -223,7 +223,7 @@ class JackTokenizer(object):
                            if len(string) > 0] #remove empty strings
         return tokenized_lines
 
-    COMMENT_RE = re.compile(r'//[^\n]*\n|/\*(.*?)\*/', re.MULTILINE | re.DOTALL) #TODO : add to grammar
+    COMMENT_RE = re.compile(r'//[^\n\"]*\n|/\*(.*?)\*/', re.MULTILINE | re.DOTALL) #TODO : add to grammar
 
     def remove_comments(self, line):
         return self.COMMENT_RE.sub('', line)
