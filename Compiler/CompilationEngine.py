@@ -1056,7 +1056,6 @@ class CompilationEngine(object):
                     type = self.tokenizer.current_value
                 # else it is a var - get varType var type
                 else:
-                    var_add = 1
                     position = self.last_pos()
                     while self.symbol_tables[position].typeOf(self.tokenizer.current_value) in [grammar.NO_INDEX, None]:
                         position -= 1
@@ -1065,7 +1064,7 @@ class CompilationEngine(object):
                     type = self.symbol_tables[position].typeOf(self.tokenizer.current_value)
 
                     if type is not None:
-
+                        var_add = 1
                         varName_index = self.get_varName_index(self.tokenizer.current_value, position)
                         varName_seg = self.get_varName_segment(self.tokenizer.current_value, position)
 
