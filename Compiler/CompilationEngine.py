@@ -539,6 +539,8 @@ class CompilationEngine(object):
 
     def checkSymbol(self, symbol, raise_error=True):
         """ Check if the symbol is in the current value"""
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        print(self.tokenizer.current_value)
         if self.tokenizer.current_value == symbol:
             return True
         else:
@@ -697,7 +699,10 @@ class CompilationEngine(object):
             self.compile_expression(True, True)
 
         # ;
+        print("&&&&&&&&&&&&&&&&&&&&&&&&&")
+        print(self.tokenizer.current_value)
         self.tokenizer.advance()
+        print(self.tokenizer.current_value)
         self.checkSymbol(";")
 
         if is_list:

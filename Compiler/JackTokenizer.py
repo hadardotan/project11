@@ -194,8 +194,10 @@ class JackTokenizer(object):
         """
         i = 0
         while i < len(tokenized_lines):
-            if QUOTATION_MARK in tokenized_lines[i]:  # case token is a string
-                tokenized_lines[i] = [tokenized_lines[i].strip()]
+            if QUOTATION_MARK in tokenized_lines:
+                # case token is a string
+                if tokenized_lines[i][0] == "\"":
+                    tokenized_lines[i] = [tokenized_lines[i].strip()]
             else:
                 tokenized_lines[i] = tokenized_lines[i].strip()
                 tokenized_lines[i] = tokenized_lines[i].split(' ')
@@ -209,9 +211,7 @@ class JackTokenizer(object):
         :param file:
         :return: tokenized_lines
         """
-
         tokenized_lines = self.remove_comments(self.code)
-        print(tokenized_lines)
         tokenized_lines = self.find_strings(tokenized_lines)
         tokenized_lines = self.split_lines(tokenized_lines)
         tokenized_lines = [item for sublist in tokenized_lines for
@@ -222,13 +222,14 @@ class JackTokenizer(object):
                            item in sublist]
         tokenized_lines = [string for string in tokenized_lines
                            if len(string) > 0] #remove empty strings
+
+        print(tokenized_lines)
         return tokenized_lines
 
-    COMMENT_RE = re.compile(r'//[^\n]*(\n|\r)*|/\*(.*?)\*/', re.MULTILINE | re.DOTALL) #TODO : add to grammar
+    COMMENT_RE = re.compile(r'//[^\n\"]*(\n|\r)|/\*(.*?)\*/', re.MULTILINE | re.DOTALL) #TODO : add to grammar
 
     def remove_comments(self, line):
         return self.COMMENT_RE.sub('', line)
-
 
 
     def update_code_by_match(self, match):
