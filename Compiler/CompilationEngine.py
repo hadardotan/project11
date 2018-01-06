@@ -693,10 +693,7 @@ class CompilationEngine(object):
 
         # compile expression
         self.tokenizer.advance()
-        if self.tokenizer.get_next()[0] == '.':
-            self.compile_subroutineCall()
-        else:
-            self.compile_expression(True, True)
+        self.compile_expression(True, True)
 
         # ;
         print("&&&&&&&&&&&&&&&&&&&&&&&&&")
