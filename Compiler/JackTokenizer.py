@@ -73,7 +73,6 @@ class JackTokenizer(object):
         else:
             self.current_value, self.current_token_type = NO_TOKEN, NO_PHRASE
 
-        print(self.current_value, self.current_token_type)
 
 
 
@@ -212,6 +211,7 @@ class JackTokenizer(object):
         """
 
         tokenized_lines = self.remove_comments(self.code)
+        print(tokenized_lines)
         tokenized_lines = self.find_strings(tokenized_lines)
         tokenized_lines = self.split_lines(tokenized_lines)
         tokenized_lines = [item for sublist in tokenized_lines for

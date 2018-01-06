@@ -539,8 +539,6 @@ class CompilationEngine(object):
 
     def checkSymbol(self, symbol, raise_error=True):
         """ Check if the symbol is in the current value"""
-        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-        print(self.tokenizer.current_value)
         if self.tokenizer.current_value == symbol:
             return True
         else:
@@ -696,10 +694,7 @@ class CompilationEngine(object):
         self.compile_expression(True, True)
 
         # ;
-        print("&&&&&&&&&&&&&&&&&&&&&&&&&")
-        print(self.tokenizer.current_value)
         self.tokenizer.advance()
-        print(self.tokenizer.current_value)
         self.checkSymbol(";")
 
         if is_list:
@@ -860,7 +855,7 @@ class CompilationEngine(object):
 
     def compile_string_const(self):
         """ Compile string constant"""
-        string = self.tokenizer.current_value
+        string = self.correct_string(self.tokenizer.current_value)
 
         self.vm.writePush(grammar.CONST, len(string))
         self.vm.writeCall("String.new", 1)
@@ -869,6 +864,11 @@ class CompilationEngine(object):
             self.vm.writePush(grammar.CONST, ord(string[i]))
             self.vm.writeCall("String.appendChar", 2)
 
+    def correct_string(self, string):
+        correct = string.replace('\t', '\\t')
+        correct = string.replace('\n', '\\n')
+        correct = string.replace('\r', '\\r')
+        return correct
 
     def get_varName_index(self, varName, position):
         varName_index = -1
@@ -944,19 +944,9 @@ class CompilationEngine(object):
         """
         # expression?
 
-
         args_counter = 0
         if self.compile_expression(False, False, True) is not False:
             args_counter +=1
-            # (',' expression)*
-            # if self.tokenizer.get_next()[0] == '.':
-            #     self.compile_subroutineCall()
-            #     print(self.tokenizer.get_next()[0])
-            #     if self.tokenizer.get_next()[0] in grammar.operators:
-            #         self.compile_expression()
-            #
-            #
-            # else:
             self.compile_expression(True, True)
             self.tokenizer.advance()
             while self.tokenizer.current_value == ',':
@@ -1064,13 +1054,11 @@ class CompilationEngine(object):
                     type = self.symbol_tables[position].typeOf(self.tokenizer.current_value)
 
                     if type is not None:
-
                         varName_index = self.get_varName_index(self.tokenizer.current_value, position)
                         varName_seg = self.get_varName_segment(self.tokenizer.current_value, position)
 
                         # push
                         self.vm.writePush(varName_seg, varName_index)
-                        print(varName_seg, varName_index)
                     else:
                         type = self.tokenizer.current_value
 
@@ -1085,8 +1073,6 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
                 args_counter = self.compile_expression_list()
                 # )
-                print(self.tokenizer.current_value)
-                print(self.tokenizer.get_next()[0])
                 self.checkSymbol(")")
                 # write to vm : call type.subroutine name
                 self.vm.write_subroutine_call(type.__str__()+'.'+subroutine_name+" "+str(args_counter+var_add))
